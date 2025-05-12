@@ -4,6 +4,8 @@
 {% block head_extra %}
 <!-- Add Chart.js if you want to render the pie chart -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{# Add CSS/JS for a date range picker library if you implement one #}
+{# Example: <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/> #}
 {% endblock %}
 
 
@@ -12,23 +14,31 @@
     <h1 class="h2">Dashboard</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary active">Day</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">Week</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">Month</button>
-            <!-- Add Date Range Picker JS library for this -->
-            <button type="button" class="btn btn-sm btn-outline-secondary">Date Range</button>
+            <!-- Links for date filtering -->
+            <a href="{{ url_for('dashboard.view_dashboard', period='day') }}"
+               class="btn btn-sm btn-outline-secondary {% if selected_period == 'day' %}active{% endif %}">Day</a>
+            <a href="{{ url_for('dashboard.view_dashboard', period='week') }}"
+               class="btn btn-sm btn-outline-secondary {% if selected_period == 'week' %}active{% endif %}">Week</a>
+            <a href="{{ url_for('dashboard.view_dashboard', period='month') }}"
+               class="btn btn-sm btn-outline-secondary {% if selected_period == 'month' %}active{% endif %}">Month</a>
+            <!-- Placeholder for Date Range Picker JS library -->
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="dateRangePickerBtn" title="Date range picker not implemented yet">Date Range</button>
         </div>
-        <!-- Optional: Other buttons like export -->
+        <!-- Display current selected range -->
+         <span class="ms-2 text-muted small align-self-center" title="Currently selected date range">
+             Showing: {{ start_date_str }} to {{ end_date_str }}
+         </span>
     </div>
 </div>
 
-<!-- Top Stats Row -->
+<!-- Top Stats Row - Uses variables from dashboard.py -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title text-muted">Average Start Time</h5>
-                <p class="card-text fs-4">{{ avg_start_time }}</p>
+                {# Use calculated value, provide fallback #}
+                <p class="card-text fs-4">{{ avg_start_time if avg_start_time != 'N/A' else '--:--' }}</p>
             </div>
         </div>
     </div>
@@ -36,15 +46,17 @@
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title text-muted">Team Working Time</h5>
-                <p class="card-text fs-4">{{ team_working_time }}</p>
+                 {# Use calculated value #}
+                <p class="card-text fs-4">{{ team_working_time | default('--:--:--', true) }}</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
          <div class="card text-center">
              <div class="card-body">
-                 <h5 class="card-title text-muted">Average Last Seen</h5>
-                 <p class="card-text fs-4">{{ avg_last_seen }}</p>
+                 <h5 class="card-title text-muted">Latest Activity Seen</h5> {# Changed label for clarity #}
+                 {# Use calculated value #}
+                 <p class="card-text fs-4">{{ avg_last_seen if avg_last_seen != 'N/A' else '--:--' }}</p>
              </div>
          </div>
      </div>
@@ -54,7 +66,8 @@
                  <div class="card text-center mb-2">
                       <div class="card-body px-1 py-2">
                            <h6 class="card-title text-muted small">Team Members</h6>
-                           <p class="card-text fs-5">{{ team_members_count }}</p>
+                           {# Use calculated value #}
+                           <p class="card-text fs-5">{{ team_members_count | default('0', true) }}</p>
                        </div>
                  </div>
              </div>
@@ -62,7 +75,8 @@
                  <div class="card text-center mb-2">
                       <div class="card-body px-1 py-2">
                            <h6 class="card-title text-muted small">Tracked Members</h6>
-                           <p class="card-text fs-5">{{ tracked_members_count }}</p>
+                           {# Use calculated value #}
+                           <p class="card-text fs-5">{{ tracked_members_count | default('0', true) }}</p>
                        </div>
                  </div>
              </div>
@@ -78,28 +92,32 @@
         <div class="card">
             <div class="card-header">
                 Top 5 websites & applications
-                 <i class="bi bi-info-circle float-end" title="Data based on active window time"></i>
+                 <i class="bi bi-info-circle float-end" title="Total active time during selected period"></i>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
+                        {# Canvas for Chart.js #}
                         <canvas id="topSitesChart" width="200" height="200"></canvas>
                     </div>
                     <div class="col-md-6">
+                        {# List corresponding to chart segments #}
                         <ul class="list-group list-group-flush">
+                            {# Loop through dynamic data passed from backend #}
                             {% for site in top_websites %}
                             <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                                {{ site.name }}
-                                <span class="badge bg-primary rounded-pill">{{ "%02d:%02d"|format(site.duration // 60, site.duration % 60) }}</span> <!-- Example format M:S -->
+                                <span title="{{ site.name }}">{{ site.name | truncate(25) }}</span> {# Truncate long names #}
+                                {# Format seconds (e.g., HH:MM:SS or MM:SS) #}
+                                <span class="badge bg-primary rounded-pill">{{ "{:0>2}:{:0>2}".format(site.duration // 60 % 60, site.duration % 60) if site.duration < 3600 else "{:0>2}:{:0>2}:{:0>2}".format(site.duration // 3600, site.duration // 60 % 60, site.duration % 60) }}</span>
                             </li>
                             {% else %}
-                            <li class="list-group-item">No activity data available.</li>
+                            <li class="list-group-item text-muted">No activity data found for this period.</li>
                             {% endfor %}
                         </ul>
                         <!-- Add pagination if needed -->
-                         <div class="text-end small text-muted mt-2">
+                         {# <div class="text-end small text-muted mt-2"> #}
                            <!-- Page 1/2 -->
-                         </div>
+                         {# </div> #}
                     </div>
                 </div>
             </div>
@@ -110,8 +128,8 @@
     <div class="col-md-6">
         <div class="card">
              <div class="card-header">
-                Work Hours (Avg)
-                <button class="btn btn-sm btn-outline-secondary float-end"><i class="bi bi-download"></i></button>
+                Work Hours (Total) {# Changed label to Total, as it's total per period #}
+                <button class="btn btn-sm btn-outline-secondary float-end" title="Download CSV (Not Implemented)"><i class="bi bi-download"></i></button>
             </div>
             <div class="card-body p-0"> <!-- Remove padding for full-width table -->
                  <div class="table-responsive">
@@ -119,20 +137,21 @@
                         <thead>
                             <tr>
                                 <th scope="col">Name</th>
-                                <th scope="col">Man Days</th>
-                                <th scope="col">Work Hours (Avg)</th>
+                                <th scope="col" title="Unique days with activity in period">Man Days</th>
+                                <th scope="col" title="Total work hours in period (HH:MM:SS)">Work Hours (Total)</th>
                             </tr>
                         </thead>
                         <tbody>
+                             {# Loop through dynamic data passed from backend #}
                              {% for item in work_hours_data %}
                              <tr>
-                                 <td>{{ item.name }}</td>
-                                 <td>{{ item.man_days }}</td>
-                                 <td>{{ item.work_hours }}</td>
+                                 <td title="{{ item.name }}">{{ item.name | truncate(25) }}</td>
+                                 <td>{{ item.man_days | default('0', true) }}</td>
+                                 <td>{{ item.work_hours | default('--:--:--', true) }}</td>
                              </tr>
                              {% else %}
                              <tr>
-                                <td colspan="3" class="text-center text-muted">No data available.</td>
+                                <td colspan="3" class="text-center text-muted">No work hour data found for this period.</td>
                              </tr>
                              {% endfor %}
                         </tbody>
@@ -144,7 +163,7 @@
 </div>
 
 <!-- Help Button (Fixed Position) -->
-<button class="btn btn-danger position-fixed bottom-0 end-0 m-3 rounded-pill" style="z-index: 1050;">
+<button class="btn btn-danger position-fixed bottom-0 end-0 m-3 rounded-pill" style="z-index: 1050;" onclick="alert('Help feature not implemented yet.');">
     <i class="bi bi-question-circle-fill"></i> Help
 </button>
 
@@ -152,26 +171,38 @@
 
 
 {% block scripts_extra %}
+{# Make sure to include the Chart.js script from the base template if needed #}
+{{ super() }}
 <script>
 // --- Basic Chart.js Example ---
+// Ensure chart canvas exists
 const ctx = document.getElementById('topSitesChart');
-const topSitesData = {{ top_websites | tojson }}; // Pass data safely from Flask
+// Get data safely passed from Flask backend
+const topSitesData = {{ top_websites | tojson | safe }}; // Use safe filter
 
-const labels = topSitesData.map(item => item.name);
-const dataValues = topSitesData.map(item => item.duration);
-// Add some default colors or generate dynamically
+const labels = topSitesData.map(item => item.name.length > 20 ? item.name.substring(0, 18) + '...' : item.name); // Shorten labels for chart
+const dataValues = topSitesData.map(item => item.duration); // Duration in seconds
+
+// Define colors (add more if you expect more than 5 segments)
 const backgroundColors = [
-    'rgba(25, 135, 84, 0.8)', // Teal/Greenish
+    'rgba(25, 135, 84, 0.8)',  // Greenish
     'rgba(13, 110, 253, 0.8)', // Blue
     'rgba(108, 117, 125, 0.8)', // Gray
-    'rgba(255, 193, 7, 0.8)',  // Yellow
+    'rgba(255, 193, 7, 0.8)',   // Yellow
     'rgba(220, 53, 69, 0.8)',   // Red
-    'rgba(248, 171, 104, 0.8)' // Orange/Peach
+    'rgba(100, 100, 255, 0.8)', // Purple-ish
+    'rgba(255, 159, 64, 0.8)'   // Orange
 ];
 
 
-if (ctx && topSitesData.length > 0) {
-  new Chart(ctx, {
+// Check if canvas context and data exist before creating chart
+if (ctx && topSitesData && topSitesData.length > 0) {
+  // Destroy previous chart instance if it exists (for dynamic updates)
+  if (window.topSitesChartInstance) {
+      window.topSitesChartInstance.destroy();
+  }
+  // Create new chart instance
+  window.topSitesChartInstance = new Chart(ctx, {
     type: 'doughnut', // Or 'pie'
     data: {
       labels: labels,
@@ -184,23 +215,50 @@ if (ctx && topSitesData.length > 0) {
     },
     options: {
         responsive: true,
-        maintainAspectRatio: false,
+        maintainAspectRatio: false, // Allows controlling height/width via CSS or container
         plugins: {
              legend: {
                 display: false // Legend is displayed as list next to chart
-            }
+             },
+             tooltip: {
+                 callbacks: {
+                     label: function(context) {
+                         let label = context.label || '';
+                         let value = context.raw || 0;
+                         let totalSeconds = parseInt(value);
+                         let hours = Math.floor(totalSeconds / 3600);
+                         let minutes = Math.floor((totalSeconds % 3600) / 60);
+                         let seconds = totalSeconds % 60;
+                         let formattedTime = '';
+                         if (hours > 0) formattedTime += `${hours}h `;
+                         if (minutes > 0 || hours > 0) formattedTime += `${minutes}m `;
+                         formattedTime += `${seconds}s`;
+                         return `${label}: ${formattedTime.trim()}`;
+                     }
+                 }
+             }
         }
     }
   });
 } else if(ctx) {
     // Optional: Display a message on the canvas if no data
     const context = ctx.getContext('2d');
+    // Clear previous drawing
+    context.clearRect(0, 0, ctx.width, ctx.height);
+    // Draw text
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     context.fillStyle = '#6c757d'; // Bootstrap text-muted color
-    context.font = "16px sans-serif";
-    context.fillText("No data available", ctx.width / 2, ctx.height / 2);
+    context.font = "14px sans-serif"; // Adjust font size
+    // Position text in the center of the canvas
+    context.fillText("No website/app data available", ctx.canvas.width / 2, ctx.canvas.height / 2);
 }
+
+// Add JS for Date Range Picker library initialization here if used
+// Example:
+// document.addEventListener('DOMContentLoaded', (event) => {
+//   const picker = new Litepicker({ element: document.getElementById('dateRangePickerBtn'), /* ... options ... */ });
+// });
 
 </script>
 {% endblock %}
