@@ -1,0 +1,9 @@
+Flask>=2.0
+pymongo[srv]>=4.0 # [srv] allows mongodb+srv:// URIs if needed
+python-dotenv>=0.19
+bcrypt>=3.2
+requests # Needed if your server ever calls external APIs
+Pillow # For image processing if needed on server side
+# Add other dependencies like Flask-Login, Flask-WTF if you implement forms/advanced auth
+# For production deployment consider:
+# gunicorn or waitress

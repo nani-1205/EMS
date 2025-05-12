@@ -1,0 +1,41 @@
+/* Make sidebar sticky and scrollable */
+#sidebarMenu {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100; /* Behind the navbar */
+    padding: 56px 0 0; /* Height of navbar */
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto; /* Scrollable contents */
+}
+
+/* Adjust main content padding to not overlap sidebar */
+@media (min-width: 768px) {
+    main {
+        padding-top: 56px; /* Height of navbar */
+    }
+}
+
+/* Active sidebar link */
+.sidebar .nav-link.active {
+    color: #0d6efd; /* Bootstrap primary blue */
+}
+
+.sidebar .nav-link {
+    color: #333;
+}
+
+.sidebar .nav-link:hover {
+     color: #0d6efd;
+}
+
+.sidebar-heading {
+    font-size: .75rem;
+}
+
+.card-body canvas {
+    max-height: 200px; /* Limit chart height */
+}

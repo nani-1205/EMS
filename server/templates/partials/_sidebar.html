@@ -1,0 +1,50 @@
+<div class="position-sticky pt-5"> <!-- Adjust pt (padding-top) to match navbar height -->
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" aria-current="page" href="{{ url_for('dashboard.view_dashboard') }}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+                {% if pending_rename_count and pending_rename_count > 0 %}
+                 <span class="badge bg-warning text-dark ms-1">{{ pending_rename_count }} !</span> <!-- Notification -->
+                {% endif %}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_page == 'users' %}active{% endif %}" href="#"> <!-- Link to users page -->
+                <i class="bi bi-people"></i> Users & Teams
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_page == 'reports' %}active{% endif %}" href="#">
+                <i class="bi bi-file-earmark-bar-graph"></i> Reports
+            </a>
+        </li>
+         <li class="nav-item">
+            <a class="nav-link {% if active_page == 'settings' %}active{% endif %}" href="#">
+                <i class="bi bi-gear"></i> Settings
+            </a>
+        </li>
+         <!-- Add more links as needed -->
+    </ul>
+
+    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase">
+        <span>Employees</span>
+        <!-- Optional: Add button? -->
+    </h6>
+    <ul class="nav flex-column mb-2">
+         {% if employees %}
+             {% for emp in employees %}
+             <li class="nav-item">
+                 <a class="nav-link text-secondary ps-4" href="#"> <!-- Link to individual employee details -->
+                     {{ emp.display_name }}
+                     {% if emp.status == 'pending_rename' %}
+                        <i class="bi bi-exclamation-triangle-fill text-warning" title="Needs Renaming"></i>
+                     {% endif %}
+                     <!-- Add status indicator (e.g., green dot if recently seen) -->
+                 </a>
+             </li>
+             {% endfor %}
+         {% else %}
+             <li class="nav-item ps-4 text-muted">No employees found.</li>
+         {% endif %}
+     </ul>
+</div>

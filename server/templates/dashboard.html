@@ -1,0 +1,206 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block head_extra %}
+<!-- Add Chart.js if you want to render the pie chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary active">Day</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">Week</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">Month</button>
+            <!-- Add Date Range Picker JS library for this -->
+            <button type="button" class="btn btn-sm btn-outline-secondary">Date Range</button>
+        </div>
+        <!-- Optional: Other buttons like export -->
+    </div>
+</div>
+
+<!-- Top Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Average Start Time</h5>
+                <p class="card-text fs-4">{{ avg_start_time }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Team Working Time</h5>
+                <p class="card-text fs-4">{{ team_working_time }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+         <div class="card text-center">
+             <div class="card-body">
+                 <h5 class="card-title text-muted">Average Last Seen</h5>
+                 <p class="card-text fs-4">{{ avg_last_seen }}</p>
+             </div>
+         </div>
+     </div>
+     <div class="col-md-3">
+         <div class="row">
+             <div class="col-6">
+                 <div class="card text-center mb-2">
+                      <div class="card-body px-1 py-2">
+                           <h6 class="card-title text-muted small">Team Members</h6>
+                           <p class="card-text fs-5">{{ team_members_count }}</p>
+                       </div>
+                 </div>
+             </div>
+              <div class="col-6">
+                 <div class="card text-center mb-2">
+                      <div class="card-body px-1 py-2">
+                           <h6 class="card-title text-muted small">Tracked Members</h6>
+                           <p class="card-text fs-5">{{ tracked_members_count }}</p>
+                       </div>
+                 </div>
+             </div>
+         </div>
+     </div>
+</div>
+
+
+<!-- Charts and Tables Row -->
+<div class="row">
+    <!-- Top 5 Websites -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                Top 5 websites & applications
+                 <i class="bi bi-info-circle float-end" title="Data based on active window time"></i>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="topSitesChart" width="200" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-group list-group-flush">
+                            {% for site in top_websites %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                {{ site.name }}
+                                <span class="badge bg-primary rounded-pill">{{ "%02d:%02d"|format(site.duration // 60, site.duration % 60) }}</span> <!-- Example format M:S -->
+                            </li>
+                            {% else %}
+                            <li class="list-group-item">No activity data available.</li>
+                            {% endfor %}
+                        </ul>
+                        <!-- Add pagination if needed -->
+                         <div class="text-end small text-muted mt-2">
+                           <!-- Page 1/2 -->
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Hours -->
+    <div class="col-md-6">
+        <div class="card">
+             <div class="card-header">
+                Work Hours (Avg)
+                <button class="btn btn-sm btn-outline-secondary float-end"><i class="bi bi-download"></i></button>
+            </div>
+            <div class="card-body p-0"> <!-- Remove padding for full-width table -->
+                 <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Man Days</th>
+                                <th scope="col">Work Hours (Avg)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                             {% for item in work_hours_data %}
+                             <tr>
+                                 <td>{{ item.name }}</td>
+                                 <td>{{ item.man_days }}</td>
+                                 <td>{{ item.work_hours }}</td>
+                             </tr>
+                             {% else %}
+                             <tr>
+                                <td colspan="3" class="text-center text-muted">No data available.</td>
+                             </tr>
+                             {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Button (Fixed Position) -->
+<button class="btn btn-danger position-fixed bottom-0 end-0 m-3 rounded-pill" style="z-index: 1050;">
+    <i class="bi bi-question-circle-fill"></i> Help
+</button>
+
+{% endblock %}
+
+
+{% block scripts_extra %}
+<script>
+// --- Basic Chart.js Example ---
+const ctx = document.getElementById('topSitesChart');
+const topSitesData = {{ top_websites | tojson }}; // Pass data safely from Flask
+
+const labels = topSitesData.map(item => item.name);
+const dataValues = topSitesData.map(item => item.duration);
+// Add some default colors or generate dynamically
+const backgroundColors = [
+    'rgba(25, 135, 84, 0.8)', // Teal/Greenish
+    'rgba(13, 110, 253, 0.8)', // Blue
+    'rgba(108, 117, 125, 0.8)', // Gray
+    'rgba(255, 193, 7, 0.8)',  // Yellow
+    'rgba(220, 53, 69, 0.8)',   // Red
+    'rgba(248, 171, 104, 0.8)' // Orange/Peach
+];
+
+
+if (ctx && topSitesData.length > 0) {
+  new Chart(ctx, {
+    type: 'doughnut', // Or 'pie'
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Time Spent (seconds)',
+        data: dataValues,
+        backgroundColor: backgroundColors.slice(0, dataValues.length),
+        hoverOffset: 4
+      }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+             legend: {
+                display: false // Legend is displayed as list next to chart
+            }
+        }
+    }
+  });
+} else if(ctx) {
+    // Optional: Display a message on the canvas if no data
+    const context = ctx.getContext('2d');
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = '#6c757d'; // Bootstrap text-muted color
+    context.font = "16px sans-serif";
+    context.fillText("No data available", ctx.width / 2, ctx.height / 2);
+}
+
+</script>
+{% endblock %}

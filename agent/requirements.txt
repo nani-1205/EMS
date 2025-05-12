@@ -1,0 +1,5 @@
+requests>=2.25
+Pillow>=9.0       # For screenshots
+psutil>=5.8       # For process/window info
+pyautogui         # Optional: For idle detection or alternative screenshots
+python-dotenv     # To load config if needed
