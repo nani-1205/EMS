@@ -7,3 +7,4 @@ Pillow # For image processing if needed on server side
 # Add other dependencies like Flask-Login, Flask-WTF if you implement forms/advanced auth
 # For production deployment consider:
 # gunicorn or waitress
+python-dateutil # For date/time manipulations
