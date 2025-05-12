@@ -1,64 +1,72 @@
 # /root/EMS/server/routes/users.py
-
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from models.db import get_db
-from routes.auth import login_required # Import login_required if needed for user routes
+from routes.auth import login_required
 from bson import ObjectId
 import datetime
 
-# --- DEFINE THE BLUEPRINT HERE ---
-users_bp = Blueprint('users', __name__, template_folder='../templates') # Adjust template_folder if it's elsewhere
+users_bp = Blueprint('users', __name__)
 
-# --- Example User Route (Build this out) ---
 @users_bp.route('/')
-@login_required # Make sure users page requires login
+@login_required
 def list_users():
     db = get_db()
-    # Fetch users who need renaming or all users
-    pending_users = list(db.employees.find({"status": "pending_rename"}))
-    active_users = list(db.employees.find({"status": {"$ne": "pending_rename"}}).sort("display_name", 1)) # Example sort
+    # Fetch all employees, maybe sort by status or name
+    employees = list(db.employees.find().sort([("status", 1), ("display_name", 1)]))
+    pending_rename_count = db.employees.count_documents({"status": "pending_rename"}) # Get count for sidebar consistency
 
-    # You'll likely want a dedicated template for this
-    # return render_template('users.html', pending=pending_users, active=active_users, active_page='users')
-    return f"User Management Page - Pending: {len(pending_users)}, Active: {len(active_users)}" # Placeholder
+    return render_template('users.html',
+                           employees=employees,
+                           pending_rename_count=pending_rename_count, # Pass count for potential header info
+                           active_page='users') # For sidebar highlighting
 
-@users_bp.route('/rename/<employee_id>', methods=['GET', 'POST'])
+@users_bp.route('/edit/<employee_doc_id>', methods=['GET', 'POST'])
 @login_required
-def rename_user(employee_id):
+def edit_user(employee_doc_id):
     db = get_db()
-    employee = db.employees.find_one({"employee_id": employee_id})
+    try:
+        obj_id = ObjectId(employee_doc_id)
+    except Exception:
+        flash("Invalid employee ID.", "danger")
+        return redirect(url_for('users.list_users'))
+
+    employee = db.employees.find_one({"_id": obj_id})
 
     if not employee:
-        flash(f"Employee {employee_id} not found.", "danger")
-        return redirect(url_for('users.list_users')) # Redirect back to user list
+        flash("Employee not found.", "danger")
+        return redirect(url_for('users.list_users'))
 
     if request.method == 'POST':
-        new_name = request.form.get('display_name')
-        if not new_name or len(new_name) < 2:
-             flash("Please provide a valid display name (at least 2 characters).", "warning")
-        else:
-            try:
-                db.employees.update_one(
-                    {"employee_id": employee_id},
-                    {"$set": {"display_name": new_name, "status": "active"}} # Update name and status
-                )
-                flash(f"Employee '{employee_id}' updated to '{new_name}'.", "success")
-                return redirect(url_for('dashboard.view_dashboard')) # Redirect to dashboard or user list
-            except Exception as e:
-                 flash(f"Error updating employee: {e}", "danger")
+        new_display_name = request.form.get('display_name', '').strip()
+        new_status = request.form.get('status', 'active') # Default to active if changed
 
-    # Pass the employee object to the template for the GET request form
-    # return render_template('rename_user.html', employee=employee) # Need to create this template
-    return f"""
-        <h1>Rename User: {employee.get('employee_id')}</h1>
-        <p>Current Name: {employee.get('display_name')}</p>
-        <form method="POST">
-            <label for="display_name">New Display Name:</label>
-            <input type="text" id="display_name" name="display_name" required minlength="2">
-            <button type="submit">Update Name</button>
-        </form>
-        <a href="{url_for('users.list_users')}">Cancel</a>
-    """ # Basic placeholder form
+        if not new_display_name:
+             flash("Display name cannot be empty.", "warning")
+             # Re-render the form with the current data
+             return render_template('user_edit.html', # You need to create this template
+                                   employee=employee,
+                                   active_page='users')
 
+        update_data = {
+            "display_name": new_display_name,
+            "status": new_status
+            # Add other fields to update here if needed (e.g., team, notes)
+        }
 
-# Add other user management routes here (edit, delete, view details, etc.)
+        try:
+            db.employees.update_one({"_id": obj_id}, {"$set": update_data})
+            flash(f"Employee '{new_display_name}' updated successfully.", "success")
+            current_app.logger.info(f"Admin '{session.get('username')}' updated employee {employee_doc_id} to name '{new_display_name}' and status '{new_status}'")
+            return redirect(url_for('users.list_users'))
+        except Exception as e:
+             flash(f"Error updating employee: {e}", "danger")
+             current_app.logger.error(f"Error updating employee {employee_doc_id}: {e}")
+
+    # For GET request, show the edit form
+    # You NEED to create 'user_edit.html' template for this form
+    flash("Editing user: " + employee.get('display_name', employee['employee_id']), "info") # Temp message
+    # return render_template('user_edit.html', employee=employee, active_page='users')
+    # Since user_edit.html isn't created, redirect back for now
+    return redirect(url_for('users.list_users'))
+
+# Add routes for deleting users, assigning teams etc. as needed

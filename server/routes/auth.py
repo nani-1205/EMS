@@ -1,4 +1,6 @@
 # /root/EMS/server/routes/auth.py
+# *** PASTE THE FULL CODE FROM THE USER'S LAST MESSAGE HERE ***
+# (Starting with 'from flask import Blueprint...' and ending with 'return redirect(url_for('auth.login')) # Redirect to the login page')
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, g
 from models.db import get_db
@@ -42,14 +44,17 @@ def login_required(f):
             return redirect(url_for('auth.login'))
 
         # --- Role Check (Example: require 'admin' role) ---
+        # Ensure only users with the 'admin' role can proceed
         if user.get('role') != 'admin':
             flash("You do not have permission to access this page.", "danger")
-            # Redirect non-admins to a different page or show an error
-            # For now, redirecting back to login, but a dedicated 'unauthorized' page or user dashboard might be better
-            return redirect(url_for('auth.login'))
+            # Redirect non-admins away from protected pages
+            # Redirecting to login might be confusing; a user dashboard or a specific 'unauthorized' page is better in a real app.
+            # For now, redirecting to dashboard might be slightly better if non-admin users have some view there.
+            # If non-admins should NEVER log in here, redirecting to login is okay. Let's assume only admins use this portal.
+            return redirect(url_for('auth.login')) # Or url_for('dashboard.view_dashboard') if non-admins have limited view
         # --- End Role Check ---
 
-        # Make user object available globally within the request context (optional)
+        # Make user object available globally within the request context (optional, but can be useful)
         g.user = user # Store the fetched user object in Flask's 'g'
 
         # If all checks pass, proceed to the original view function
@@ -60,8 +65,9 @@ def login_required(f):
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    # If user is already logged in (session exists), redirect to dashboard
+    # If user is already logged in (valid session exists), redirect to dashboard
     if 'user_id' in session:
+        # Optional: Add a quick verification here? Maybe not necessary if login_required does it robustly.
         return redirect(url_for('dashboard.view_dashboard'))
 
     if request.method == 'POST':
@@ -74,41 +80,50 @@ def login():
              return render_template('login.html')
 
         db = get_db()
-        user = db.users.find_one({'username': username})
+        user = db.users.find_one({'username': username}) # Case-sensitive username check
 
-        # Check if user exists and password is correct
+        # Check if user exists and password is correct using bcrypt
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash']):
             # User authenticated successfully
-            session.clear() # Clear any old session data
+            session.clear() # Prevent session fixation: clear old session before creating new one
 
-            # --- FIX: Store the string representation of ObjectId in the session ---
+            # --- Store the string representation of ObjectId in the session ---
+            # MongoDB ObjectIds are not directly JSON serializable for Flask's default session handler
             session['user_id'] = str(user['_id'])
             # ---------------------------------------------------------------------
             session['username'] = user['username']
-            session['role'] = user.get('role', 'user') # Store role for convenience
+            session['role'] = user.get('role', 'user') # Store role for convenience in templates/checks
 
             current_app.logger.info(f"User '{username}' logged in successfully.")
             flash(f"Welcome back, {user['username']}!", "success")
 
-            # Check for pending rename (this logic might need refinement based on your user/employee mapping)
-            employee = db.employees.find_one({"employee_id": user['username']})
-            if employee and employee.get("status") == "pending_rename":
-                 flash(f"Notification: Employee '{employee['employee_id']}' needs configuration.", "info")
+            # --- Notification Check for Pending Rename ---
+            # This assumes the 'employee_id' in the 'employees' collection might match the admin 'username'.
+            # This mapping might need adjustment based on your actual structure.
+            # Maybe the check should happen on the dashboard load instead?
+            try:
+                employee = db.employees.find_one({"employee_id": user['username']}) # Check if an employee record matches this username
+                if employee and employee.get("status") == "pending_rename":
+                     flash(f"Notification: Employee record '{employee['employee_id']}' needs configuration.", "info")
+            except Exception as e:
+                current_app.logger.error(f"Error checking employee status during login for {username}: {e}")
+            # --- End Notification Check ---
 
-            # Handle redirection after login
+            # Handle redirection after successful login
             next_page = request.args.get('next')
-            # Security: Prevent open redirect attacks - only redirect to internal paths
+            # Security: Prevent open redirect attacks - only redirect to relative paths within the application
             if next_page and url_parse(next_page).netloc == '':
-                current_app.logger.debug(f"Redirecting to requested next page: {next_page}")
+                current_app.logger.debug(f"Redirecting logged-in user to requested internal page: {next_page}")
                 return redirect(next_page)
             else:
-                # Default redirect to the main dashboard
-                current_app.logger.debug("Redirecting to default dashboard.")
+                # Default redirect to the main dashboard if 'next' is missing or invalid
+                current_app.logger.debug(f"Redirecting logged-in user to default dashboard.")
                 return redirect(url_for('dashboard.view_dashboard'))
         else:
-            # Authentication failed
+            # Authentication failed (user not found or password mismatch)
             current_app.logger.warning(f"Failed login attempt for username: '{username}'")
             flash('Invalid username or password.', 'danger')
+            # Do NOT reveal whether the username exists or not
 
     # Render the login page for GET requests or failed POST attempts
     return render_template('login.html')
@@ -117,7 +132,7 @@ def login():
 @auth_bp.route('/logout')
 def logout():
     # Get username before clearing session for logging purposes
-    username = session.get('username', 'unknown user')
+    username = session.get('username', 'unknown user') # Get username if available
     session.clear() # Remove all data from the session
     current_app.logger.info(f"User '{username}' logged out.")
     flash('You have been successfully logged out.', 'info')
