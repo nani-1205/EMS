@@ -5,8 +5,14 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Users & Teams</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <!-- Add buttons like 'Add User' if manual creation is needed -->
-        <!-- <button type="button" class="btn btn-sm btn-outline-secondary">Add User</button> -->
+        <form method="GET" action="{{ url_for('users.list_users') }}" class="d-flex">
+            <input class="form-control form-control-sm me-2" type="search" placeholder="Search name, ID, status..."
+                   aria-label="Search" name="q" value="{{ search_query or '' }}">
+            <button class="btn btn-sm btn-outline-success" type="submit">Search</button>
+             {% if search_query %}
+                <a href="{{ url_for('users.list_users') }}" class="btn btn-sm btn-outline-secondary ms-2" title="Clear search">Clear</a>
+             {% endif %}
+        </form>
     </div>
 </div>
 
@@ -35,29 +41,75 @@
                 <td>
                     {% if emp.status == 'pending_rename' %}
                         <span class="badge bg-warning text-dark">{{ emp.status | replace('_', ' ') | title }}</span>
-                    {% elif emp.status == 'inactive' %}
+                    {% elif emp.status == 'inactive' or emp.status == 'disabled' %}
                          <span class="badge bg-secondary">{{ emp.status | title }}</span>
                     {% else %}
                         <span class="badge bg-success">{{ emp.status | title }}</span>
                     {% endif %}
                 </td>
-                <td>{{ emp.first_seen.strftime('%Y-%m-%d %H:%M:%S %Z') if emp.first_seen else 'N/A' }}</td>
-                <td>{{ emp.last_seen.strftime('%Y-%m-%d %H:%M:%S %Z') if emp.last_seen else 'N/A' }}</td>
+                <td>{{ emp.first_seen.strftime('%Y-%m-%d %H:%M') if emp.first_seen else 'N/A' }}</td> {# Shorter time format #}
+                <td>{{ emp.last_seen.strftime('%Y-%m-%d %H:%M') if emp.last_seen else 'N/A' }}</td>  {# Shorter time format #}
                 <td>
-                    <!-- Link to the edit route -->
                     <a href="{{ url_for('users.edit_user', employee_doc_id=emp._id) }}" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-pencil-square"></i> Edit
                     </a>
-                    <!-- Add Delete Button with confirmation later -->
-                    <!-- <button class="btn btn-sm btn-outline-danger ms-1"><i class="bi bi-trash"></i></button> -->
+                    <!-- Add Delete Button with confirmation later if needed -->
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="6" class="text-center text-muted">No employees found.</td>
+                <td colspan="6" class="text-center text-muted">
+                    {% if search_query %}
+                        No employees found matching your search criteria.
+                    {% else %}
+                        No employees found.
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+{% if total_pages > 1 %}
+<nav aria-label="User pagination" class="mt-4">
+    <ul class="pagination justify-content-center flex-wrap"> {# Added flex-wrap for small screens #}
+        <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('users.list_users', page=current_page-1, q=search_query) if current_page > 1 else '#' }}">«</a>
+        </li>
+
+        {% set show_pages = 5 %} {# Number of page links to show around current page #}
+        {% set start_page = [1, current_page - (show_pages // 2)] | max %}
+        {% set end_page = [total_pages, start_page + show_pages - 1] | min %}
+        {% if end_page - start_page + 1 < show_pages %} {# Adjust start_page if end_page is too small #}
+            {% set start_page = [1, end_page - show_pages + 1] | max %}
+        {% endif %}
+
+        {% if start_page > 1 %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('users.list_users', page=1, q=search_query) }}">1</a></li>
+            {% if start_page > 2 %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endif %}
+
+        {% for p in range(start_page, end_page + 1) %}
+            <li class="page-item {% if p == current_page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('users.list_users', page=p, q=search_query) }}">{{ p }}</a>
+            </li>
+        {% endfor %}
+
+        {% if end_page < total_pages %}
+            {% if end_page < total_pages - 1 %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('users.list_users', page=total_pages, q=search_query) }}">{{ total_pages }}</a></li>
+        {% endif %}
+
+        <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('users.list_users', page=current_page+1, q=search_query) if current_page < total_pages else '#' }}">»</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
 {% endblock %}

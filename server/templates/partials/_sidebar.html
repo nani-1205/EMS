@@ -5,53 +5,87 @@
             <a class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" aria-current="page" href="{{ url_for('dashboard.view_dashboard') }}">
                 <i class="bi bi-speedometer2 me-2"></i> Dashboard
                 {% if pending_rename_count and pending_rename_count > 0 %}
-                 <span class="badge bg-warning text-dark ms-1 float-end">{{ pending_rename_count }} !</span> <!-- Notification -->
+                 <span class="badge bg-warning text-dark ms-1 float-end" title="{{ pending_rename_count }} users need configuration">{{ pending_rename_count }} !</span>
                 {% endif %}
             </a>
         </li>
         <li class="nav-item">
-             <!-- *** UPDATE LINK HERE *** -->
             <a class="nav-link {% if active_page == 'users' %}active{% endif %}" href="{{ url_for('users.list_users') }}">
                 <i class="bi bi-people me-2"></i> Users & Teams
                  {% if pending_rename_count and pending_rename_count > 0 and active_page != 'dashboard' %}
-                 <span class="badge bg-warning text-dark ms-1 float-end">{{ pending_rename_count }} !</span> <!-- Show notification here too if not on dashboard -->
+                 <span class="badge bg-warning text-dark ms-1 float-end" title="{{ pending_rename_count }} users need configuration">{{ pending_rename_count }} !</span>
                 {% endif %}
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if active_page == 'reports' %}active{% endif %}" href="#"> <!-- Placeholder -->
+            <a class="nav-link {% if active_page == 'reports' %}active{% endif %}" href="#" title="Reports (Not Implemented)">
                 <i class="bi bi-file-earmark-bar-graph me-2"></i> Reports
             </a>
         </li>
          <li class="nav-item">
-            <a class="nav-link {% if active_page == 'settings' %}active{% endif %}" href="#"> <!-- Placeholder -->
+            <a class="nav-link {% if active_page == 'settings' %}active{% endif %}" href="#" title="Settings (Not Implemented)">
                 <i class="bi bi-gear me-2"></i> Settings
             </a>
         </li>
-         <!-- Add more links as needed -->
     </ul>
 
     <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase">
         <span>Employees Online</span>
-        <!-- Optional: Add button? -->
+        <span id="activeEmployeeCount" class="badge bg-success rounded-pill">0</span>
     </h6>
-    <ul class="nav flex-column mb-2">
-         {% if employees %} {# Assumes 'employees' is passed to layout context, might need adjustment #}
-             {% for emp in employees %} {# Limit this list or make it dynamic #}
-                 {% if emp.status != 'inactive' %} {# Example: Only show active/pending #}
-                 <li class="nav-item">
-                     <a class="nav-link text-secondary ps-4" href="{{ url_for('users.edit_user', employee_doc_id=emp._id) }}"> <!-- Link to individual employee details -->
-                         {{ emp.display_name | truncate(20) }} {# Truncate long names #}
-                         {% if emp.status == 'pending_rename' %}
-                            <i class="bi bi-exclamation-triangle-fill text-warning" title="Needs Renaming"></i>
-                         {% endif %}
-                         {# Add status indicator based on last_seen maybe #}
-                     </a>
-                 </li>
-                 {% endif %}
-             {% endfor %}
-         {% else %}
-             <li class="nav-item ps-4 text-muted">No employees found.</li>
-         {% endif %}
+    <!-- This UL will be populated by JavaScript polling -->
+    <ul class="nav flex-column mb-2" id="realtimeEmployeeList">
+         <li class="nav-item ps-4 text-muted">Loading...</li>
      </ul>
 </div>
+
+<!-- JavaScript for polling active employees should be in layout.html or a global JS file -->
+<!-- This script assumes it can run after the DOM is loaded -->
+<script>
+    function fetchActiveEmployees() {
+        fetch("{{ url_for('api.get_active_employees') }}") // Use url_for for robustness
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const employeeListElement = document.getElementById('realtimeEmployeeList');
+                const employeeCountElement = document.getElementById('activeEmployeeCount');
+
+                if (employeeListElement) {
+                    employeeListElement.innerHTML = ''; // Clear existing list
+                    if (data && data.length > 0) {
+                        employeeCountElement.textContent = data.length;
+                        data.forEach(emp => {
+                            const listItem = document.createElement('li');
+                            listItem.classList.add('nav-item');
+                            // Link to user edit page
+                            const userEditUrl = "{{ url_for('users.edit_user', employee_doc_id='EMP_ID_PLACEHOLDER') }}".replace('EMP_ID_PLACEHOLDER', emp._id);
+                            listItem.innerHTML = `<a class="nav-link text-secondary ps-4" href="${userEditUrl}" title="${emp.display_name} (ID: ${emp.employee_id})">${emp.display_name.length > 20 ? emp.display_name.substring(0,18)+'...' : emp.display_name}</a>`;
+                            employeeListElement.appendChild(listItem);
+                        });
+                    } else {
+                        employeeCountElement.textContent = '0';
+                        employeeListElement.innerHTML = '<li class="nav-item ps-4 text-muted">No employees recently active.</li>';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching active employees:', error);
+                const employeeListElement = document.getElementById('realtimeEmployeeList');
+                if (employeeListElement) {
+                    // employeeListElement.innerHTML = '<li class="nav-item ps-4 text-danger small">Error loading active users.</li>';
+                }
+                // Silently fail for polling to avoid constant error messages if server has temporary issue
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('realtimeEmployeeList')) { // Only run if the element exists
+            fetchActiveEmployees(); // Initial call
+            setInterval(fetchActiveEmployees, 30000); // Poll every 30 seconds (30000 ms)
+        }
+    });
+</script>

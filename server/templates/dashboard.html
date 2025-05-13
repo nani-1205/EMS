@@ -2,10 +2,12 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block head_extra %}
-<!-- Add Chart.js if you want to render the pie chart -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{# Add CSS/JS for a date range picker library if you implement one #}
-{# Example: <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/> #}
+{{ super() }} {# Include from layout if any #}
+<!-- Add Chart.js if not already in layout -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+<!-- Litepicker CSS & JS (ensure it's loaded before the script block below) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/>
+<script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js" defer></script>
 {% endblock %}
 
 
@@ -14,30 +16,26 @@
     <h1 class="h2">Dashboard</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
-            <!-- Links for date filtering -->
             <a href="{{ url_for('dashboard.view_dashboard', period='day') }}"
                class="btn btn-sm btn-outline-secondary {% if selected_period == 'day' %}active{% endif %}">Day</a>
             <a href="{{ url_for('dashboard.view_dashboard', period='week') }}"
                class="btn btn-sm btn-outline-secondary {% if selected_period == 'week' %}active{% endif %}">Week</a>
             <a href="{{ url_for('dashboard.view_dashboard', period='month') }}"
                class="btn btn-sm btn-outline-secondary {% if selected_period == 'month' %}active{% endif %}">Month</a>
-            <!-- Placeholder for Date Range Picker JS library -->
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="dateRangePickerBtn" title="Date range picker not implemented yet">Date Range</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary {% if selected_period == 'custom' %}active{% endif %}" id="dateRangePickerTrigger">Date Range</button>
         </div>
-        <!-- Display current selected range -->
          <span class="ms-2 text-muted small align-self-center" title="Currently selected date range">
              Showing: {{ start_date_str }} to {{ end_date_str }}
          </span>
     </div>
 </div>
 
-<!-- Top Stats Row - Uses variables from dashboard.py -->
+<!-- Top Stats Row -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title text-muted">Average Start Time</h5>
-                {# Use calculated value, provide fallback #}
                 <p class="card-text fs-4">{{ avg_start_time if avg_start_time != 'N/A' else '--:--' }}</p>
             </div>
         </div>
@@ -46,7 +44,6 @@
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title text-muted">Team Working Time</h5>
-                 {# Use calculated value #}
                 <p class="card-text fs-4">{{ team_working_time | default('--:--:--', true) }}</p>
             </div>
         </div>
@@ -54,8 +51,7 @@
     <div class="col-md-3">
          <div class="card text-center">
              <div class="card-body">
-                 <h5 class="card-title text-muted">Latest Activity Seen</h5> {# Changed label for clarity #}
-                 {# Use calculated value #}
+                 <h5 class="card-title text-muted">Latest Activity Seen</h5>
                  <p class="card-text fs-4">{{ avg_last_seen if avg_last_seen != 'N/A' else '--:--' }}</p>
              </div>
          </div>
@@ -66,7 +62,6 @@
                  <div class="card text-center mb-2">
                       <div class="card-body px-1 py-2">
                            <h6 class="card-title text-muted small">Team Members</h6>
-                           {# Use calculated value #}
                            <p class="card-text fs-5">{{ team_members_count | default('0', true) }}</p>
                        </div>
                  </div>
@@ -75,7 +70,6 @@
                  <div class="card text-center mb-2">
                       <div class="card-body px-1 py-2">
                            <h6 class="card-title text-muted small">Tracked Members</h6>
-                           {# Use calculated value #}
                            <p class="card-text fs-5">{{ tracked_members_count | default('0', true) }}</p>
                        </div>
                  </div>
@@ -87,7 +81,6 @@
 
 <!-- Charts and Tables Row -->
 <div class="row">
-    <!-- Top 5 Websites -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
@@ -97,41 +90,32 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        {# Canvas for Chart.js #}
                         <canvas id="topSitesChart" width="200" height="200"></canvas>
                     </div>
                     <div class="col-md-6">
-                        {# List corresponding to chart segments #}
                         <ul class="list-group list-group-flush">
-                            {# Loop through dynamic data passed from backend #}
                             {% for site in top_websites %}
                             <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                                <span title="{{ site.name }}">{{ site.name | truncate(25) }}</span> {# Truncate long names #}
-                                {# Format seconds (e.g., HH:MM:SS or MM:SS) #}
+                                <span title="{{ site.name }}">{{ site.name | truncate(25) }}</span>
                                 <span class="badge bg-primary rounded-pill">{{ "{:0>2}:{:0>2}".format(site.duration // 60 % 60, site.duration % 60) if site.duration < 3600 else "{:0>2}:{:0>2}:{:0>2}".format(site.duration // 3600, site.duration // 60 % 60, site.duration % 60) }}</span>
                             </li>
                             {% else %}
                             <li class="list-group-item text-muted">No activity data found for this period.</li>
                             {% endfor %}
                         </ul>
-                        <!-- Add pagination if needed -->
-                         {# <div class="text-end small text-muted mt-2"> #}
-                           <!-- Page 1/2 -->
-                         {# </div> #}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Work Hours -->
     <div class="col-md-6">
         <div class="card">
              <div class="card-header">
-                Work Hours (Total) {# Changed label to Total, as it's total per period #}
+                Work Hours (Total)
                 <button class="btn btn-sm btn-outline-secondary float-end" title="Download CSV (Not Implemented)"><i class="bi bi-download"></i></button>
             </div>
-            <div class="card-body p-0"> <!-- Remove padding for full-width table -->
+            <div class="card-body p-0">
                  <div class="table-responsive">
                     <table class="table table-striped table-hover mb-0">
                         <thead>
@@ -142,7 +126,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                             {# Loop through dynamic data passed from backend #}
                              {% for item in work_hours_data %}
                              <tr>
                                  <td title="{{ item.name }}">{{ item.name | truncate(25) }}</td>
@@ -162,103 +145,199 @@
     </div>
 </div>
 
-<!-- Help Button (Fixed Position) -->
 <button class="btn btn-danger position-fixed bottom-0 end-0 m-3 rounded-pill" style="z-index: 1050;" onclick="alert('Help feature not implemented yet.');">
     <i class="bi bi-question-circle-fill"></i> Help
 </button>
-
 {% endblock %}
 
 
 {% block scripts_extra %}
-{# Make sure to include the Chart.js script from the base template if needed #}
 {{ super() }}
 <script>
-// --- Basic Chart.js Example ---
-// Ensure chart canvas exists
-const ctx = document.getElementById('topSitesChart');
-// Get data safely passed from Flask backend
-const topSitesData = {{ top_websites | tojson | safe }}; // Use safe filter
-
-const labels = topSitesData.map(item => item.name.length > 20 ? item.name.substring(0, 18) + '...' : item.name); // Shorten labels for chart
-const dataValues = topSitesData.map(item => item.duration); // Duration in seconds
-
-// Define colors (add more if you expect more than 5 segments)
-const backgroundColors = [
-    'rgba(25, 135, 84, 0.8)',  // Greenish
-    'rgba(13, 110, 253, 0.8)', // Blue
-    'rgba(108, 117, 125, 0.8)', // Gray
-    'rgba(255, 193, 7, 0.8)',   // Yellow
-    'rgba(220, 53, 69, 0.8)',   // Red
-    'rgba(100, 100, 255, 0.8)', // Purple-ish
-    'rgba(255, 159, 64, 0.8)'   // Orange
-];
-
-
-// Check if canvas context and data exist before creating chart
-if (ctx && topSitesData && topSitesData.length > 0) {
-  // Destroy previous chart instance if it exists (for dynamic updates)
-  if (window.topSitesChartInstance) {
-      window.topSitesChartInstance.destroy();
-  }
-  // Create new chart instance
-  window.topSitesChartInstance = new Chart(ctx, {
-    type: 'doughnut', // Or 'pie'
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Time Spent (seconds)',
-        data: dataValues,
-        backgroundColor: backgroundColors.slice(0, dataValues.length),
-        hoverOffset: 4
-      }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false, // Allows controlling height/width via CSS or container
-        plugins: {
-             legend: {
-                display: false // Legend is displayed as list next to chart
-             },
-             tooltip: {
-                 callbacks: {
-                     label: function(context) {
-                         let label = context.label || '';
-                         let value = context.raw || 0;
-                         let totalSeconds = parseInt(value);
-                         let hours = Math.floor(totalSeconds / 3600);
-                         let minutes = Math.floor((totalSeconds % 3600) / 60);
-                         let seconds = totalSeconds % 60;
-                         let formattedTime = '';
-                         if (hours > 0) formattedTime += `${hours}h `;
-                         if (minutes > 0 || hours > 0) formattedTime += `${minutes}m `;
-                         formattedTime += `${seconds}s`;
-                         return `${label}: ${formattedTime.trim()}`;
-                     }
-                 }
-             }
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Litepicker
+    if (document.getElementById('dateRangePickerTrigger')) {
+        const picker = new Litepicker({
+            element: document.getElementById('dateRangePickerTrigger'),
+            singleMode: false,
+            numberOfMonths: 2,
+            numberOfColumns: 2,
+            format: 'YYYY-MM-DD',
+            buttonText: {apply: 'Apply', cancel: 'Cancel', previousMonth: '<i class="bi bi-chevron-left"></i>', nextMonth: '<i class="bi bi-chevron-right"></i>', reset: '<i class="bi bi-arrow-counterclockwise"></i>'},
+            {% if selected_period == 'custom' and start_date_str and end_date_str %}
+            startDate: '{{ start_date_str }}',
+            endDate: '{{ end_date_str }}',
+            {% endif %}
+            setup: (pickerInstance) => { // Changed variable name to avoid conflict
+                pickerInstance.on('selected', (date1, date2) => {
+                    if (date1 && date2) { // Ensure both dates are selected
+                        const startDate = date1.format('YYYY-MM-DD');
+                        const endDate = date2.format('YYYY-MM-DD');
+                        window.location.href = `{{ url_for('dashboard.view_dashboard') }}?period=custom&start=${startDate}&end=${endDate}`;
+                    }
+                });
+            }
+        });
     }
-  });
-} else if(ctx) {
-    // Optional: Display a message on the canvas if no data
-    const context = ctx.getContext('2d');
-    // Clear previous drawing
-    context.clearRect(0, 0, ctx.width, ctx.height);
-    // Draw text
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillStyle = '#6c757d'; // Bootstrap text-muted color
-    context.font = "14px sans-serif"; // Adjust font size
-    // Position text in the center of the canvas
-    context.fillText("No website/app data available", ctx.canvas.width / 2, ctx.canvas.height / 2);
-}
 
-// Add JS for Date Range Picker library initialization here if used
-// Example:
-// document.addEventListener('DOMContentLoaded', (event) => {
-//   const picker = new Litepicker({ element: document.getElementById('dateRangePickerBtn'), /* ... options ... */ });
-// });
+    // Chart.js for Top Sites
+    const ctx = document.getElementById('topSitesChart');
+    const topSitesData = {{ top_websites | tojson | safe }};
+    const labels = topSitesData.map(item => item.name.length > 20 ? item.name.substring(0, 18) + '...' : item.name);
+    const dataValues = topSitesData.map(item => item.duration);
+    const backgroundColors = ['rgba(25, 135, 84, 0.8)','rgba(13, 110, 253, 0.8)','rgba(108, 117, 125, 0.8)','rgba(255, 193, 7, 0.8)','rgba(220, 53, 69, 0.8)'];
 
+    if (ctx && topSitesData && topSitesData.length > 0) {
+      if (window.topSitesChartInstance) { window.topSitesChartInstance.destroy(); }
+      window.topSitesChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: labels, datasets: [{ label: 'Time Spent (seconds)', data: dataValues, backgroundColor: backgroundColors.slice(0, dataValues.length), hoverOffset: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c){let l=c.label||'',v=c.raw||0,s=parseInt(v),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60,t='';if(h>0)t+=`${h}h `;if(m>0||h>0)t+=`${m}m `;t+=`${sec}s`;return`${l}: ${t.trim()}`;}}}}}
+      });
+    } else if (ctx) {
+        const context = ctx.getContext('2d');
+        context.clearRect(0, 0, ctx.width, ctx.height);
+        context.textAlign = 'center'; context.textBaseline = 'middle'; context.fillStyle = '#6c757d'; context.font = "14px sans-serif";
+        context.fillText("No website/app data available", ctx.canvas.width / 2, ctx.canvas.height / 2);
+    }
+});
 </script>
 {% endblock %}
+
+# /root/EMS/server/routes/dashboard.py
+from flask import Blueprint, render_template, session, redirect, url_for, current_app, request, g
+from routes.auth import login_required
+from models.db import get_db
+from bson import ObjectId
+import datetime
+from dateutil.relativedelta import relativedelta # For date calculations (pip install python-dateutil)
+
+dashboard_bp = Blueprint('dashboard', __name__)
+
+def get_date_range(period='day', start_str=None, end_str=None):
+    now = datetime.datetime.now(datetime.timezone.utc)
+    start_date, end_date = None, None # Initialize
+
+    if period == 'custom' and start_str and end_str:
+        try:
+            start_date = datetime.datetime.strptime(start_str, '%Y-%m-%d').replace(tzinfo=datetime.timezone.utc)
+            end_date = datetime.datetime.strptime(end_str, '%Y-%m-%d').replace(tzinfo=datetime.timezone.utc)
+        except ValueError:
+            current_app.logger.warning(f"Invalid custom date format: start={start_str}, end={end_str}. Falling back to 'day'.")
+            period = 'day' # Fallback
+
+    if period == 'week':
+        start_date = now - relativedelta(days=now.weekday()) # Start of current week (Monday)
+        end_date = start_date + relativedelta(days=6)
+    elif period == 'month':
+        start_date = now.replace(day=1)
+        end_date = (start_date + relativedelta(months=1)) - relativedelta(days=1)
+    elif period == 'day': # Default or fallback
+        start_date = now # Use current day if not specified otherwise
+        # end_date will be set below to cover the whole day
+
+    # Ensure start_date and end_date are set if not custom
+    if not start_date: start_date = now
+    if not end_date: end_date = now # Default to today if end_date is somehow not set
+
+    # Set times to cover the whole day(s)
+    start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_date = end_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return start_date, end_date
+
+def format_seconds(total_seconds):
+    if not isinstance(total_seconds, (int, float)) or total_seconds < 0:
+        return "00:00:00"
+    hours, remainder = divmod(int(total_seconds), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+@dashboard_bp.route('/dashboard')
+@login_required
+def view_dashboard():
+    db = get_db()
+    selected_period = request.args.get('period', 'day')
+    custom_start_str = request.args.get('start')
+    custom_end_str = request.args.get('end')
+
+    start_date, end_date = get_date_range(selected_period, custom_start_str, custom_end_str)
+    current_app.logger.info(f"Dashboard period: {selected_period}, Range: {start_date} to {end_date}")
+
+    employees = list(db.employees.find().sort("display_name", 1)) # For sidebar context, might be large
+    pending_rename_count = db.employees.count_documents({"status": "pending_rename"})
+    team_members_count = db.employees.count_documents({})
+    tracked_members_count = db.employees.count_documents({"status": {"$nin": ["inactive", "disabled"]}})
+
+    # Average Start Time
+    avg_start_pipeline = [
+        {"$match": {"start_time": {"$gte": start_date, "$lte": end_date}}}, # Filter by start_time within range
+        {"$group": {"_id": {"employee_id": "$employee_id", "date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$start_time"}}}, "first_activity_time": {"$min": "$start_time"}}},
+        {"$project": {"_id": 0, "start_hour": {"$hour": "$first_activity_time"}, "start_minute": {"$minute": "$first_activity_time"}}},
+        {"$group": {"_id": None, "avg_hour": {"$avg": "$start_hour"}, "avg_minute": {"$avg": "$start_minute"}}}
+    ]
+    avg_start_result = list(db.activity_logs.aggregate(avg_start_pipeline))
+    avg_start_time_str = "N/A"
+    if avg_start_result and avg_start_result[0].get('avg_hour') is not None:
+        avg_h = int(avg_start_result[0]['avg_hour'])
+        avg_m = int(avg_start_result[0]['avg_minute'])
+        avg_start_time_str = f"{avg_h:02d}:{avg_m:02d}"
+
+    # Team Working Time
+    work_time_pipeline = [
+        {"$match": {"timestamp": {"$gte": start_date, "$lte": end_date}, "duration_seconds": {"$exists": True, "$gt": 0}}},
+        {"$group": {"_id": None, "total_duration": {"$sum": "$duration_seconds"}}}
+    ]
+    work_time_result = list(db.activity_logs.aggregate(work_time_pipeline))
+    team_working_time_str = "00:00:00"
+    if work_time_result:
+        team_working_time_str = format_seconds(work_time_result[0].get('total_duration', 0))
+
+    # Latest Activity Seen
+    latest_seen_employee = db.employees.find_one(
+        {"last_seen": {"$gte": start_date, "$lte": end_date}}, # Optionally filter by range
+        sort=[("last_seen", -1)]
+    )
+    avg_last_seen_str = "N/A" # Renamed from original screenshot, more like "Latest Seen in Period"
+    if latest_seen_employee and latest_seen_employee.get('last_seen'):
+        avg_last_seen_str = latest_seen_employee['last_seen'].strftime("%H:%M")
+
+    # Top 5 Websites/Applications
+    top_sites_pipeline = [
+        {"$match": {"timestamp": {"$gte": start_date, "$lte": end_date}, "duration_seconds": {"$exists": True, "$gt": 0}, "$or": [{"window_title": {"$exists": True, "$ne": ""}}, {"process_name": {"$exists": True, "$ne": ""}}]}},
+        {"$project": {"activity_name": {"$ifNull": ["$window_title", "$process_name"]}, "duration_seconds": 1}}, # Simplified ifNull
+        {"$group": {"_id": "$activity_name", "total_duration": {"$sum": "$duration_seconds"}}},
+        {"$sort": {"total_duration": -1}}, {"$limit": 5}
+    ]
+    top_sites_result = list(db.activity_logs.aggregate(top_sites_pipeline))
+    top_websites_data = [{"name": item['_id'], "duration": item['total_duration']} for item in top_sites_result]
+
+    # Work Hours (Total) Table
+    work_hours_pipeline = [
+         {"$match": {"timestamp": {"$gte": start_date, "$lte": end_date}, "duration_seconds": {"$exists": True, "$gt": 0}}},
+        {"$group": {"_id": "$employee_id", "total_seconds": {"$sum": "$duration_seconds"}, "unique_days": {"$addToSet": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp", "timezone": "UTC"}}}}},
+        {"$lookup": {"from": "employees", "localField": "_id", "foreignField": "employee_id", "as": "employee_info"}},
+        {"$unwind": {"path": "$employee_info", "preserveNullAndEmptyArrays": True}},
+        {"$project": {"_id": 0, "employee_id": "$_id", "display_name": "$employee_info.display_name", "total_seconds": 1, "man_days": {"$size": "$unique_days"}}},
+        {"$sort": {"display_name": 1}}
+    ]
+    work_hours_result = list(db.activity_logs.aggregate(work_hours_pipeline))
+    work_hours_data_list = []
+    for item in work_hours_result:
+         work_hours_data_list.append({
+            "name": item.get("display_name", item["employee_id"]),
+            "employee_id": item["employee_id"],
+            "man_days": item.get("man_days", 0),
+            "work_hours": format_seconds(item['total_seconds'])
+        })
+
+    return render_template('dashboard.html',
+                           username=session.get('username'),
+                           avg_start_time=avg_start_time_str, team_working_time=team_working_time_str,
+                           avg_last_seen=avg_last_seen_str, team_members_count=team_members_count,
+                           tracked_members_count=tracked_members_count, top_websites=top_websites_data,
+                           work_hours_data=work_hours_data_list,
+                           employees=employees, # For sidebar context
+                           pending_rename_count=pending_rename_count, active_page='dashboard',
+                           selected_period=selected_period,
+                           start_date_str=start_date.strftime("%Y-%m-%d"),
+                           end_date_str=end_date.strftime("%Y-%m-%d"))
