@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Application Settings</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-lg-6">
+        <h4>Change Admin Password</h4>
+        <p class="text-muted">Update your administrator account password.</p>
+        <form method="POST" action="{{ url_for('settings.change_password') }}">
+            <div class="mb-3">
+                <label for="current_password" class="form-label">Current Password</label>
+                <input type="password" class="form-control" id="current_password" name="current_password" required>
+            </div>
+            <div class="mb-3">
+                <label for="new_password" class="form-label">New Password</label>
+                <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+            </div>
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label">Confirm New Password</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+            </div>
+            <button type="submit" class="btn btn-primary">Change Password</button>
+        </form>
+        <hr class="my-4">
+        <!-- Add other settings sections here -->
+        <!--
+        <h4>Agent Configuration</h4>
+        <p class="text-muted">Manage agent settings (Not Implemented)</p>
+        ...
+        -->
+    </div>
+</div>
+
+{% endblock %}

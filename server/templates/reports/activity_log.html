@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+{% block title %}Activity Log Report{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/>
+<script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Activity Log Report</h1>
+</div>
+
+<form method="GET" action="{{ url_for('reports.activity_log_report') }}" class="mb-4 p-3 border rounded bg-light">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label for="employee_id" class="form-label">Select Employee:</label>
+            <select name="employee_id" id="employee_id" class="form-select">
+                <option value="">-- All Employees (Can be slow) --</option>
+                {% for emp in employees %}
+                <option value="{{ emp.employee_id }}" {% if emp.employee_id == selected_employee_id %}selected{% endif %}>
+                    {{ emp.display_name }} ({{ emp.employee_id }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="start_date_picker_report" class="form-label">Start Date:</label>
+            <input type="text" class="form-control" id="start_date_picker_report" name="start_date" value="{{ start_date_str }}">
+        </div>
+        <div class="col-md-3">
+            <label for="end_date_picker_report" class="form-label">End Date:</label>
+            <input type="text" class="form-control" id="end_date_picker_report" name="end_date" value="{{ end_date_str }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">View Report</button>
+        </div>
+    </div>
+</form>
+
+{% if selected_employee_id %}
+    {% if activity_logs %}
+    <div class="table-responsive">
+        <table class="table table-striped table-sm table-hover">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Window Title</th>
+                    <th>Process Name</th>
+                    <th>Duration (s)</th>
+                    <th>Active</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in activity_logs %}
+                <tr>
+                    <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td title="{{ log.window_title }}">{{ log.window_title | truncate(60) if log.window_title else 'N/A' }}</td>
+                    <td title="{{ log.process_name }}">{{ log.process_name | truncate(40) if log.process_name else 'N/A' }}</td>
+                    <td>{{ log.duration_seconds | default('N/A', true) }}</td>
+                    <td>{% if log.is_active %}Yes{% else %}No{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {# Pagination #}
+    {% if total_pages > 1 %}
+    <nav aria-label="Activity Log Pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('reports.activity_log_report', employee_id=selected_employee_id, start_date=start_date_str, end_date=end_date_str, page=current_page-1) }}">«</a>
+            </li>
+            {% for p in range(1, total_pages + 1) %}{# Simplified pagination for brevity #}
+                <li class="page-item {% if p == current_page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('reports.activity_log_report', employee_id=selected_employee_id, start_date=start_date_str, end_date=end_date_str, page=p) }}">{{p}}</a>
+                </li>
+            {% endfor %}
+            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('reports.activity_log_report', employee_id=selected_employee_id, start_date=start_date_str, end_date=end_date_str, page=current_page+1) }}">»</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+        <p class="text-center text-muted mt-4">No activity logs found for the selected criteria.</p>
+    {% endif %}
+{% else %}
+    <p class="text-center text-muted mt-4">Please select an employee to view their activity log.</p>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts_extra %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('start_date_picker_report')) {
+        new Litepicker({ element: document.getElementById('start_date_picker_report'), format: 'YYYY-MM-DD' });
+    }
+    if (document.getElementById('end_date_picker_report')) {
+        new Litepicker({ element: document.getElementById('end_date_picker_report'), format: 'YYYY-MM-DD' });
+    }
+});
+</script>
+{% endblock %}
