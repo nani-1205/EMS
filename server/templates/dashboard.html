@@ -164,8 +164,8 @@ document.addEventListener('DOMContentLoaded', function() {
             numberOfColumns: 2,
             format: 'YYYY-MM-DD',
             buttonText: {apply: 'Apply', cancel: 'Cancel', previousMonth: '<i class="bi bi-chevron-left"></i>', nextMonth: '<i class="bi bi-chevron-right"></i>', reset: '<i class="bi bi-arrow-counterclockwise"></i>'},
-            startDate: "{{ selected_period == 'custom' and start_date_str|escapejs or '' }}",
-            endDate: "{{ selected_period == 'custom' and end_date_str|escapejs or '' }}",
+            startDate: "{{ selected_period == 'custom' and start_date_str|tojson or '' }}",
+            endDate: "{{ selected_period == 'custom' and end_date_str|tojson or '' }}",
             setup: (pickerInstance) => { // Changed variable name to avoid conflict
                 pickerInstance.on('selected', (date1, date2) => {
                     if (date1 && date2) { // Ensure both dates are selected
