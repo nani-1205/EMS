@@ -6,25 +6,29 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/>
 <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js" defer></script>
 <style>
-    .screenshot-gallery img { width: 100%; height: auto; border: 1px solid #ddd; margin-bottom: 15px; cursor: pointer; }
-    .screenshot-gallery .col-md-3 { margin-bottom: 1rem; }
-    /* Modal styles */
-    .modal-lg { max-width: 90%; }
-    .modal-body img { max-width: 100%; height: auto; }
+    .screenshot-gallery .card { transition: transform .2s; }
+    .screenshot-gallery .card:hover { transform: scale(1.03); }
+    .screenshot-gallery .card-img-top { width: 100%; height: 150px; object-fit: cover; cursor: pointer; }
+    .screenshot-gallery .col-lg-2 { margin-bottom: 1rem; } /* Adjust grid column for more/less thumbnails per row */
+    .modal-xl { max-width: 90%; } /* Make modal larger */
+    .modal-body img { max-width: 100%; height: auto; max-height: 80vh; /* Limit image height in modal */ }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Screenshot Report</h1>
+    <a href="{{ url_for('reports.index') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left-circle me-1"></i> Back to Reports List
+    </a>
 </div>
 
 <form method="GET" action="{{ url_for('reports.screenshot_report') }}" class="mb-4 p-3 border rounded bg-light">
     <div class="row g-3 align-items-end">
         <div class="col-md-4">
             <label for="employee_id_ss" class="form-label">Select Employee:</label>
-            <select name="employee_id" id="employee_id_ss" class="form-select">
-                <option value="">-- Select Employee --</option>
+            <select name="employee_id" id="employee_id_ss" class="form-select" required>
+                <option value="" {% if not selected_employee_id %}selected{% endif %} disabled>-- Select an Employee --</option>
                 {% for emp in employees %}
                 <option value="{{ emp.employee_id }}" {% if emp.employee_id == selected_employee_id %}selected{% endif %}>
                     {{ emp.display_name }} ({{ emp.employee_id }})
@@ -48,20 +52,24 @@
 
 {% if selected_employee_id %}
     {% if screenshots %}
-    <div class="row screenshot-gallery">
+    <div class="row screenshot-gallery g-3">
         {% for ss_log in screenshots %}
-        <div class="col-md-3 col-sm-6">
-            <img src="{{ url_for('reports.view_screenshot', filename=ss_log.screenshot_path) }}"
-                 alt="Screenshot from {{ ss_log.timestamp.strftime('%Y-%m-%d %H:%M') }}"
-                 class="img-thumbnail"
-                 data-bs-toggle="modal" data-bs-target="#screenshotModal"
-                 data-img-src="{{ url_for('reports.view_screenshot', filename=ss_log.screenshot_path) }}"
-                 data-img-title="Screenshot: {{ ss_log.employee_id }} at {{ ss_log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}">
-            <p class="text-center small text-muted">{{ ss_log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6"> {# More responsive grid #}
+            <div class="card h-100 shadow-sm">
+                <img src="{{ url_for('reports.view_screenshot', filename=ss_log.screenshot_path) }}"
+                     alt="Screenshot from {{ ss_log.timestamp.strftime('%Y-%m-%d %H:%M') }}"
+                     class="card-img-top"
+                     data-bs-toggle="modal" data-bs-target="#screenshotModal"
+                     data-img-src="{{ url_for('reports.view_screenshot', filename=ss_log.screenshot_path) }}"
+                     data-img-title="Screenshot: {{ ss_log.employee_id }} at {{ ss_log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}">
+                <div class="card-footer text-muted small text-center py-1">
+                    {{ ss_log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                </div>
+            </div>
         </div>
         {% endfor %}
     </div>
-    {# Pagination #}
+
     {% if total_pages > 1 %}
     <nav aria-label="Screenshot Pagination" class="mt-4">
         <ul class="pagination justify-content-center">
@@ -79,23 +87,28 @@
         </ul>
     </nav>
     {% endif %}
+
     {% else %}
         <p class="text-center text-muted mt-4">No screenshots found for the selected criteria.</p>
     {% endif %}
 {% else %}
-    <p class="text-center text-muted mt-4">Please select an employee to view their screenshots.</p>
+    <p class="text-center text-muted mt-4">Please select an employee and date range to view their screenshots.</p>
 {% endif %}
 
 <!-- Modal for displaying larger screenshot -->
 <div class="modal fade" id="screenshotModal" tabindex="-1" aria-labelledby="screenshotModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="screenshotModalLabel">Screenshot</h5>
+        <h5 class="modal-title" id="screenshotModalLabel">Screenshot Preview</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
         <img src="" id="modalImage" class="img-fluid" alt="Enlarged Screenshot">
+      </div>
+      <div class="modal-footer">
+         <p id="modalTitleParagraph" class="text-muted me-auto"></p>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -113,18 +126,17 @@ document.addEventListener('DOMContentLoaded', function() {
         new Litepicker({ element: document.getElementById('end_date_picker_ss'), format: 'YYYY-MM-DD' });
     }
 
-    // Modal image population
-    var screenshotModal = document.getElementById('screenshotModal');
-    if (screenshotModal) {
-        screenshotModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget; // Button that triggered the modal
+    var screenshotModalElement = document.getElementById('screenshotModal');
+    if (screenshotModalElement) {
+        screenshotModalElement.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
             var imgSrc = button.getAttribute('data-img-src');
             var imgTitle = button.getAttribute('data-img-title');
-            var modalImage = screenshotModal.querySelector('#modalImage');
-            var modalTitle = screenshotModal.querySelector('#screenshotModalLabel');
+            var modalImage = screenshotModalElement.querySelector('#modalImage');
+            var modalTitleParagraph = screenshotModalElement.querySelector('#modalTitleParagraph');
 
             modalImage.src = imgSrc;
-            modalTitle.textContent = imgTitle;
+            if(modalTitleParagraph) modalTitleParagraph.textContent = imgTitle;
         });
     }
 });
