@@ -32,11 +32,11 @@ IF EXIST "%VENV_PATH%\Scripts\activate.bat" (
     echo Activating virtual environment...
     call "%VENV_PATH%\Scripts\activate.bat"
     if errorlevel 1 (
-        echo WARNING: Failed to activate virtual environment '%VENV_NAME%'. Will try global Python.
+        echo WARNING: Failed to activate virtual environment '%VENV_NAME%'.
+        echo Will attempt to use global 'python'.
         SET PYTHON_CMD=python
     ) ELSE (
-        echo Virtual environment activated. Python should now resolve to venv.
-        REM If VIRTUAL_ENV is set by activate.bat, use it to define PYTHON_CMD explicitly
+        echo Virtual environment activated.
         IF DEFINED VIRTUAL_ENV (
             SET PYTHON_CMD="%VIRTUAL_ENV%\Scripts\python.exe"
             echo Using Python from VENV: !PYTHON_CMD!
@@ -46,38 +46,34 @@ IF EXIST "%VENV_PATH%\Scripts\activate.bat" (
         )
     )
 ) ELSE (
-    echo No '%VENV_NAME%' virtual environment found in %SCRIPT_DIR%.
-    echo Attempting to use global Python.
+    echo No '%VENV_NAME%' virtual environment found. Attempting to use global 'python'.
     echo It is STRONGLY recommended to create and use a virtual environment.
     SET PYTHON_CMD=python
 )
 echo.
 
 REM --- Check for Python and Pip (NOW uses %PYTHON_CMD%) ---
-echo Checking for Python installation using '%PYTHON_CMD%'...
-IF EXIST "%PYTHON_CMD%" (
-    echo Python executable found: %PYTHON_CMD%
-    REM Check Python Version (without redirection for initial check - requires additional error handling)
-    FOR /F "tokens=2 delims=." %%I IN ('%PYTHON_CMD% --version 2^>^&1 ^| findstr [0-9].[0-9]') DO (
-        echo Python version: %%I
-        REM Do any version parsing / checking you need here
-    )
-) ELSE (
-    echo ERROR: Python interpreter (!PYTHON_CMD!) not found.
+echo Checking for Python installation using: %PYTHON_CMD%
+%PYTHON_CMD% --version REM <--- TEMPORARILY REMOVED >nul 2>&1 for ATTEMPT 1
+echo Errorlevel after Python version check: !errorlevel!
+if !errorlevel! neq 0 (
+    echo ERROR: Python interpreter (!PYTHON_CMD!) not found or did not execute correctly (Errorlevel: !errorlevel!).
     echo Please ensure Python (and the venv if used) is correctly set up and in PATH.
     pause
     exit /b 1
 )
+echo Python found. The command above should have printed its version.
+echo.
 
-echo Checking for pip using '%PYTHON_CMD%'...
-%PYTHON_CMD% -m pip --version >nul 2>&1
+echo Checking for pip using: %PYTHON_CMD%
+%PYTHON_CMD% -m pip --version REM <--- TEMPORARILY REMOVED >nul 2>&1 for ATTEMPT 1
+echo Errorlevel after pip version check: !errorlevel!
 if !errorlevel! neq 0 (
-    echo ERROR: pip (Python package manager) not found for !PYTHON_CMD!.
+    echo ERROR: pip (Python package manager) not found for !PYTHON_CMD! (Errorlevel: !errorlevel!).
     pause
     exit /b 1
 )
-echo pip found:
-%PYTHON_CMD% -m pip --version
+echo pip found. The command above should have printed its version.
 echo.
 
 echo Upgrading pip in the current environment...
@@ -176,7 +172,7 @@ echo.
 --hidden-import=PIL._tkinter_finder ^
 %AGENT_SCRIPT_NAME%
 
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     echo. & echo ******************** & echo *** BUILD FAILED *** & echo ********************
     echo Check the output above for specific PyInstaller errors.
     pause
