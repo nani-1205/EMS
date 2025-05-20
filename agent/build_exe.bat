@@ -54,13 +54,11 @@ echo.
 REM --- Check for Python ---
 echo Checking for Python installation using: %PYTHON_CMD%
 %PYTHON_CMD% --version
-SET PYTHON_CHECK_ERRORLEVEL=!errorlevel! REM Store errorlevel immediately
-
+SET PYTHON_CHECK_ERRORLEVEL=!errorlevel!
 echo Python version command executed. Stored Errorlevel: !PYTHON_CHECK_ERRORLEVEL!
-
+REM Comment moved to its own line
 IF !PYTHON_CHECK_ERRORLEVEL! NEQ 0 (
     echo ERROR: Python interpreter (!PYTHON_CMD!) did not execute correctly (Errorlevel: !PYTHON_CHECK_ERRORLEVEL!).
-    echo Please ensure Python (and the venv if used) is correctly set up and in PATH.
     pause
     exit /b 1
 )
@@ -70,10 +68,9 @@ echo.
 REM --- Check for Pip ---
 echo Checking for pip using: %PYTHON_CMD%
 %PYTHON_CMD% -m pip --version
-SET PIP_CHECK_ERRORLEVEL=!errorlevel! REM Store errorlevel immediately
-
+SET PIP_CHECK_ERRORLEVEL=!errorlevel!
 echo Pip version command executed. Stored Errorlevel: !PIP_CHECK_ERRORLEVEL!
-
+REM Comment moved to its own line
 IF !PIP_CHECK_ERRORLEVEL! NEQ 0 (
     echo ERROR: pip (Python package manager) not found for !PYTHON_CMD! (Errorlevel: !PIP_CHECK_ERRORLEVEL!).
     pause
@@ -81,6 +78,8 @@ IF !PIP_CHECK_ERRORLEVEL! NEQ 0 (
 )
 echo pip check successful.
 echo.
+
+REM ... (rest of the script remains the same) ...
 
 echo Upgrading pip in the current environment...
 %PYTHON_CMD% -m pip install --upgrade pip
