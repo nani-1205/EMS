@@ -4,4 +4,4 @@ psutil>=5.8       # For process/window info
 pyautogui         # Optional: For idle detection or alternative screenshots
 python-dotenv     # To load config if needed
 pyinstaller>=5.0  # For packaging the agent
-pywin32 
+pywin32           #python venv\Scripts\pywin32_postinstall.py -install

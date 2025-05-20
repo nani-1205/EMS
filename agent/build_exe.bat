@@ -8,7 +8,7 @@ echo.
 
 REM Get the directory of this batch script
 SET "SCRIPT_DIR=%~dp0"
-REM Navigate to the script's directory (where agent.py and requirements.txt should be)
+REM Navigate to the script's directory
 echo Changing directory to: %SCRIPT_DIR%
 cd /D "%SCRIPT_DIR%"
 if errorlevel 1 (
@@ -30,7 +30,6 @@ echo Checking for Python installation...
 %PYTHON_EXE% --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo ERROR: Python interpreter ('%PYTHON_EXE%') not found or not in PATH.
-    echo Please ensure Python is installed and added to your system PATH.
     pause
     exit /b 1
 )
@@ -40,7 +39,6 @@ echo Checking for pip...
 %PYTHON_EXE% -m pip --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo ERROR: pip (Python package manager) not found.
-    echo It's usually installed with Python. Please check your Python installation.
     pause
     exit /b 1
 )
@@ -48,10 +46,11 @@ echo pip found.
 echo.
 
 REM --- Virtual Environment Handling ---
-IF EXIST "%VENV_NAME%\Scripts\activate.bat" (
+SET VENV_PATH=%SCRIPT_DIR%%VENV_NAME%
+IF EXIST "%VENV_PATH%\Scripts\activate.bat" (
     echo Virtual environment '%VENV_NAME%' found.
     echo Activating virtual environment...
-    call "%VENV_NAME%\Scripts\activate.bat"
+    call "%VENV_PATH%\Scripts\activate.bat"
     if errorlevel 1 (
         echo ERROR: Failed to activate virtual environment '%VENV_NAME%'.
         pause
@@ -59,37 +58,35 @@ IF EXIST "%VENV_NAME%\Scripts\activate.bat" (
     )
     echo Virtual environment activated.
 ) ELSE (
-    echo No '%VENV_NAME%' virtual environment found.
-    choice /C YN /M "Create a new virtual environment named '%VENV_NAME%' (Recommended)?"
-    IF ERRORLEVEL 2 (
-        echo Proceeding with current Python environment. Be cautious of global package conflicts.
-    ) ELSE (
-        echo Creating new virtual environment '%VENV_NAME%'...
-        %PYTHON_EXE% -m venv %VENV_NAME%
-        if errorlevel 1 (
-            echo ERROR: Failed to create virtual environment '%VENV_NAME%'.
-            pause
-            exit /b 1
-        )
-        echo Activating new virtual environment...
-        call "%VENV_NAME%\Scripts\activate.bat"
-        if errorlevel 1 (
-            echo ERROR: Failed to activate newly created virtual environment '%VENV_NAME%'.
-            pause
-            exit /b 1
-        )
-        echo New virtual environment created and activated.
-    )
+    echo No '%VENV_NAME%' virtual environment found in %SCRIPT_DIR%.
+    REM Simplified: We will proceed without venv if not found, or user can create it manually.
+    REM Forcing venv creation in a batch script can be error-prone.
+    echo Consider creating a virtual environment manually:
+    echo   python -m venv %VENV_NAME%
+    echo   %VENV_NAME%\Scripts\activate
+    echo Proceeding with current Python environment.
+    REM choice /C YN /M "Create a new virtual environment named '%VENV_NAME%' (Recommended)?"
+    REM IF ERRORLEVEL 2 (
+    REM    echo Proceeding with current Python environment. Be cautious of global package conflicts.
+    REM ) ELSE (
+    REM    echo Creating new virtual environment '%VENV_NAME%'...
+    REM    %PYTHON_EXE% -m venv %VENV_NAME%
+    REM    if errorlevel 1 ( echo ERROR: Failed to create virtual environment. & pause & exit /b 1 )
+    REM    echo Activating new virtual environment...
+    REM    call "%VENV_NAME%\Scripts\activate.bat"
+    REM    if errorlevel 1 ( echo ERROR: Failed to activate new virtual environment. & pause & exit /b 1 )
+    REM    echo New virtual environment created and activated.
+    REM )
 )
 echo.
 
 echo Upgrading pip in the current environment...
-python.exe -m pip install --upgrade pip
+%PYTHON_EXE% -m pip install --upgrade pip
 echo.
 
 echo Installing/Updating core build dependencies (PyInstaller, pywin32, psutil)...
-pip install --upgrade pyinstaller pywin32 psutil
-if %errorlevel% neq 0 (
+%PYTHON_EXE% -m pip install --upgrade pyinstaller pywin32 psutil
+if errorlevel 1 (
     echo ERROR: Failed to install/update PyInstaller, pywin32, or psutil.
     pause
     exit /b 1
@@ -99,8 +96,8 @@ echo.
 
 IF EXIST "%REQUIREMENTS_FILE%" (
     echo Installing agent dependencies from %REQUIREMENTS_FILE%...
-    pip install -r %REQUIREMENTS_FILE%
-    if %errorlevel% neq 0 (
+    %PYTHON_EXE% -m pip install -r %REQUIREMENTS_FILE%
+    if errorlevel 1 (
         echo ERROR: Failed to install agent dependencies from %REQUIREMENTS_FILE%.
         pause
         exit /b 1
@@ -108,43 +105,43 @@ IF EXIST "%REQUIREMENTS_FILE%" (
     echo Agent dependencies installed.
 ) ELSE (
     echo WARNING: %REQUIREMENTS_FILE% not found. Skipping agent dependency installation.
-    echo Ensure all necessary packages (like 'requests', 'Pillow') are manually installed or build might fail.
 )
 echo.
 
 echo Running pywin32_postinstall script (if available)...
-REM This helps ensure pywin32 DLLs are correctly registered/copied
-IF EXIST "%VIRTUAL_ENV%\Scripts\pywin32_postinstall.py" (
-    python "%VIRTUAL_ENV%\Scripts\pywin32_postinstall.py" -install
-) ELSE IF EXIST "%USERPROFILE%\AppData\Local\Programs\Python\Python*\Scripts\pywin32_postinstall.py" (
-    REM Attempt to find it in common global Python script locations if not in venv
-    FOR /F "delims=" %%i IN ('dir /b /s "%USERPROFILE%\AppData\Local\Programs\Python\Python*\Scripts\pywin32_postinstall.py"') DO (
-        echo Found global pywin32_postinstall.py at %%i
-        python "%%i" -install
-        GOTO FoundPostInstall
+SET PYWIN32_POSTINSTALL_SCRIPT=
+IF DEFINED VIRTUAL_ENV (
+    IF EXIST "%VIRTUAL_ENV%\Scripts\pywin32_postinstall.py" (
+        SET PYWIN32_POSTINSTALL_SCRIPT="%VIRTUAL_ENV%\Scripts\pywin32_postinstall.py"
     )
-    FOR /F "delims=" %%i IN ('dir /b /s "C:\Python*\Scripts\pywin32_postinstall.py"') DO (
-         echo Found global pywin32_postinstall.py at %%i
-         python "%%i" -install
-         GOTO FoundPostInstall
+)
+IF NOT DEFINED PYWIN32_POSTINSTALL_SCRIPT (
+    REM Check common global locations if not in VIRTUAL_ENV or not found there
+    FOR /F "delims=" %%G IN ('where pywin32_postinstall.py 2^>nul') DO (
+        IF NOT DEFINED PYWIN32_POSTINSTALL_SCRIPT SET PYWIN32_POSTINSTALL_SCRIPT="%%G"
     )
-    echo pywin32_postinstall.py not found in typical locations.
-    :FoundPostInstall
+)
+
+IF DEFINED PYWIN32_POSTINSTALL_SCRIPT (
+    echo Found pywin32_postinstall.py at !PYWIN32_POSTINSTALL_SCRIPT!
+    %PYTHON_EXE% !PYWIN32_POSTINSTALL_SCRIPT! -install
+    if errorlevel 1 (
+        echo WARNING: pywin32_postinstall.py script execution might have failed.
+    ) else (
+        echo pywin32_postinstall.py executed.
+    )
 ) ELSE (
      echo pywin32_postinstall.py script not found. This might be okay for newer pywin32 versions.
 )
 echo.
 
-
 echo Starting PyInstaller build for %AGENT_SCRIPT_NAME%...
-REM Clean previous build artifacts
 IF EXIST "dist" rmdir /s /q "dist"
 IF EXIST "build" rmdir /s /q "build"
 IF EXIST "%OUTPUT_EXE_NAME%.spec" del "%OUTPUT_EXE_NAME%.spec"
 echo.
 
-REM --- PyInstaller Command with Hidden Imports ---
-pyinstaller --onefile --windowed --name %OUTPUT_EXE_NAME% ^
+%PYTHON_EXE% -m PyInstaller --onefile --windowed --name %OUTPUT_EXE_NAME% ^
 --clean ^
 --log-level %PYINSTALLER_LOG_LEVEL% ^
 --noconfirm ^
@@ -180,36 +177,17 @@ pyinstaller --onefile --windowed --name %OUTPUT_EXE_NAME% ^
 --hidden-import=PIL._tkinter_finder ^
 %AGENT_SCRIPT_NAME%
 
-REM Check if build was successful
 if %errorlevel% neq 0 (
-    echo.
-    echo *******************************************************
-    echo ***               PYINSTALLER BUILD FAILED          ***
-    echo *******************************************************
-    echo Please check the output above for specific errors from PyInstaller.
-    echo Common issues:
-    echo   - Missing Python packages (check pip install steps).
-    echo   - Incorrect paths or script names.
-    echo   - Antivirus software interfering with PyInstaller.
-    echo   - Problems with specific hidden imports if versions changed.
+    echo. & echo ******************** & echo *** BUILD FAILED *** & echo ********************
+    echo Check the output above for specific PyInstaller errors.
     pause
     exit /b %errorlevel%
 )
 
+echo. & echo ************************ & echo *** BUILD SUCCESSFUL *** & echo ************************
+echo EXE created in the 'dist' folder: dist\%OUTPUT_EXE_NAME%.exe
 echo.
-echo *******************************************************
-echo ***            PYINSTALLER BUILD SUCCESSFUL         ***
-echo *******************************************************
-echo Executable created: dist\%OUTPUT_EXE_NAME%.exe
-echo.
-
-REM Optional: Deactivate virtual environment if it was used and VIRTUAL_ENV is set
-IF DEFINED VIRTUAL_ENV (
-   echo Deactivating virtual environment (if one was active through this script)...
-   REM 'call deactivate' might work if the venv sets it, otherwise no standard command.
-   REM For 'venv' created by 'python -m venv', there's no direct deactivate.bat to call broadly.
-   REM The user can close the cmd window or manually deactivate if needed.
-)
 
 echo Build process finished.
 pause
+ENDLOCAL
