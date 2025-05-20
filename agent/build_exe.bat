@@ -32,11 +32,10 @@ IF EXIST "%VENV_PATH%\Scripts\activate.bat" (
     echo Activating virtual environment...
     call "%VENV_PATH%\Scripts\activate.bat"
     if errorlevel 1 (
-        echo WARNING: Failed to activate virtual environment '%VENV_NAME%'.
-        echo Will attempt to use global 'python'.
+        echo WARNING: Failed to activate virtual environment '%VENV_NAME%'. Will try global Python.
         SET PYTHON_CMD=python
     ) ELSE (
-        echo Virtual environment activated.
+        echo Virtual environment activated. Python should now resolve to venv.
         REM If VIRTUAL_ENV is set by activate.bat, use it to define PYTHON_CMD explicitly
         IF DEFINED VIRTUAL_ENV (
             SET PYTHON_CMD="%VIRTUAL_ENV%\Scripts\python.exe"
@@ -47,26 +46,30 @@ IF EXIST "%VENV_PATH%\Scripts\activate.bat" (
         )
     )
 ) ELSE (
-    echo No '%VENV_NAME%' virtual environment found. Attempting to use global 'python'.
+    echo No '%VENV_NAME%' virtual environment found in %SCRIPT_DIR%.
+    echo Attempting to use global Python.
     echo It is STRONGLY recommended to create and use a virtual environment.
     SET PYTHON_CMD=python
 )
 echo.
 
 REM --- Check for Python and Pip (NOW uses %PYTHON_CMD%) ---
-echo Checking for Python installation using: %PYTHON_CMD%
-%PYTHON_CMD% --version >nul 2>&1
-if !errorlevel! neq 0 (
-    echo ERROR: Python interpreter (!PYTHON_CMD!) not found or did not execute correctly.
+echo Checking for Python installation using '%PYTHON_CMD%'...
+IF EXIST "%PYTHON_CMD%" (
+    echo Python executable found: %PYTHON_CMD%
+    REM Check Python Version (without redirection for initial check - requires additional error handling)
+    FOR /F "tokens=2 delims=." %%I IN ('%PYTHON_CMD% --version 2^>^&1 ^| findstr [0-9].[0-9]') DO (
+        echo Python version: %%I
+        REM Do any version parsing / checking you need here
+    )
+) ELSE (
+    echo ERROR: Python interpreter (!PYTHON_CMD!) not found.
     echo Please ensure Python (and the venv if used) is correctly set up and in PATH.
     pause
     exit /b 1
 )
-echo Python found:
-%PYTHON_CMD% --version
-echo.
 
-echo Checking for pip using: %PYTHON_CMD%
+echo Checking for pip using '%PYTHON_CMD%'...
 %PYTHON_CMD% -m pip --version >nul 2>&1
 if !errorlevel! neq 0 (
     echo ERROR: pip (Python package manager) not found for !PYTHON_CMD!.
@@ -173,7 +176,7 @@ echo.
 --hidden-import=PIL._tkinter_finder ^
 %AGENT_SCRIPT_NAME%
 
-if !errorlevel! neq 0 (
+if %errorlevel% neq 0 (
     echo. & echo ******************** & echo *** BUILD FAILED *** & echo ********************
     echo Check the output above for specific PyInstaller errors.
     pause
