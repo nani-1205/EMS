@@ -9,3 +9,4 @@ Pillow # For image processing if needed on server side
 # gunicorn or waitress
 python-dateutil # For date/time manipulations
 Flask-SocketIO # For real-time features
+python-dateutil # For date/time manipulations
