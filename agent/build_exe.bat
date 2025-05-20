@@ -36,7 +36,8 @@ IF EXIST "%VENV_PATH%\Scripts\activate.bat" (
         SET PYTHON_TO_USE=python
     ) ELSE (
         echo Virtual environment activated. Python should now resolve to venv.
-        SET PYTHON_TO_USE=python REM Redundant if venv activation worked, but safe
+        REM Redundant if venv activation worked, but safe
+        SET PYTHON_TO_USE=python
     )
 ) ELSE (
     echo No '%VENV_NAME%' virtual environment found in %SCRIPT_DIR%.
