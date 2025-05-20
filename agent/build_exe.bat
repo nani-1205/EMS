@@ -23,7 +23,7 @@ SET OUTPUT_EXE_NAME=monitoring_agent
 SET AGENT_SCRIPT_NAME=agent.py
 SET REQUIREMENTS_FILE=requirements.txt
 SET PYINSTALLER_LOG_LEVEL=INFO
-SET PYTHON_TO_USE=python
+SET PYTHON_CMD=python
 
 REM --- Virtual Environment Handling FIRST ---
 SET VENV_PATH=%SCRIPT_DIR%%VENV_NAME%
@@ -32,54 +32,58 @@ IF EXIST "%VENV_PATH%\Scripts\activate.bat" (
     echo Activating virtual environment...
     call "%VENV_PATH%\Scripts\activate.bat"
     if errorlevel 1 (
-        echo WARNING: Failed to activate virtual environment '%VENV_NAME%'. Will try global Python.
-        SET PYTHON_TO_USE=python
+        echo WARNING: Failed to activate virtual environment '%VENV_NAME%'.
+        echo Will attempt to use global 'python'.
+        SET PYTHON_CMD=python
     ) ELSE (
-        echo Virtual environment activated. Python should now resolve to venv.
-        REM Redundant if venv activation worked, but safe
-        SET PYTHON_TO_USE=python
+        echo Virtual environment activated.
+        REM If VIRTUAL_ENV is set by activate.bat, use it to define PYTHON_CMD explicitly
+        IF DEFINED VIRTUAL_ENV (
+            SET PYTHON_CMD="%VIRTUAL_ENV%\Scripts\python.exe"
+            echo Using Python from VENV: !PYTHON_CMD!
+        ) ELSE (
+            echo VIRTUAL_ENV not set after activation. Using 'python'.
+            SET PYTHON_CMD=python
+        )
     )
 ) ELSE (
-    echo No '%VENV_NAME%' virtual environment found in %SCRIPT_DIR%.
-    echo Attempting to use global Python.
-    echo It is STRONGLY recommended to create and use a virtual environment for consistency:
-    echo   python -m venv %VENV_NAME%
-    echo   %VENV_NAME%\Scripts\activate
-    SET PYTHON_TO_USE=python
+    echo No '%VENV_NAME%' virtual environment found. Attempting to use global 'python'.
+    echo It is STRONGLY recommended to create and use a virtual environment.
+    SET PYTHON_CMD=python
 )
 echo.
 
-REM --- Check for Python and Pip (NOW uses %PYTHON_TO_USE%) ---
-echo Checking for Python installation using '%PYTHON_TO_USE%'...
-%PYTHON_TO_USE% --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERROR: Python interpreter ('%PYTHON_TO_USE%') not found or not in PATH.
-    echo Please ensure Python (and the venv if used) is correctly set up.
+REM --- Check for Python and Pip (NOW uses %PYTHON_CMD%) ---
+echo Checking for Python installation using: %PYTHON_CMD%
+%PYTHON_CMD% --version >nul 2>&1
+if !errorlevel! neq 0 (
+    echo ERROR: Python interpreter (!PYTHON_CMD!) not found or did not execute correctly.
+    echo Please ensure Python (and the venv if used) is correctly set up and in PATH.
     pause
     exit /b 1
 )
 echo Python found:
-%PYTHON_TO_USE% --version
+%PYTHON_CMD% --version
 echo.
 
-echo Checking for pip using '%PYTHON_TO_USE%'...
-%PYTHON_TO_USE% -m pip --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERROR: pip (Python package manager) not found for '%PYTHON_TO_USE%'.
+echo Checking for pip using: %PYTHON_CMD%
+%PYTHON_CMD% -m pip --version >nul 2>&1
+if !errorlevel! neq 0 (
+    echo ERROR: pip (Python package manager) not found for !PYTHON_CMD!.
     pause
     exit /b 1
 )
 echo pip found:
-%PYTHON_TO_USE% -m pip --version
+%PYTHON_CMD% -m pip --version
 echo.
 
 echo Upgrading pip in the current environment...
-%PYTHON_TO_USE% -m pip install --upgrade pip
+%PYTHON_CMD% -m pip install --upgrade pip
 echo.
 
 echo Installing/Updating core build dependencies (PyInstaller, pywin32, psutil)...
-%PYTHON_TO_USE% -m pip install --upgrade pyinstaller pywin32 psutil
-if errorlevel 1 (
+%PYTHON_CMD% -m pip install --upgrade pyinstaller pywin32 psutil
+if !errorlevel! neq 0 (
     echo ERROR: Failed to install/update PyInstaller, pywin32, or psutil.
     pause
     exit /b 1
@@ -89,8 +93,8 @@ echo.
 
 IF EXIST "%REQUIREMENTS_FILE%" (
     echo Installing agent dependencies from %REQUIREMENTS_FILE%...
-    %PYTHON_TO_USE% -m pip install -r %REQUIREMENTS_FILE%
-    if errorlevel 1 (
+    %PYTHON_CMD% -m pip install -r %REQUIREMENTS_FILE%
+    if !errorlevel! neq 0 (
         echo ERROR: Failed to install agent dependencies from %REQUIREMENTS_FILE%.
         pause
         exit /b 1
@@ -116,8 +120,8 @@ IF NOT DEFINED PYWIN32_POSTINSTALL_SCRIPT (
 
 IF DEFINED PYWIN32_POSTINSTALL_SCRIPT (
     echo Found pywin32_postinstall.py at !PYWIN32_POSTINSTALL_SCRIPT!
-    %PYTHON_TO_USE% !PYWIN32_POSTINSTALL_SCRIPT! -install
-    if errorlevel 1 (
+    %PYTHON_CMD% !PYWIN32_POSTINSTALL_SCRIPT! -install
+    if !errorlevel! neq 0 (
         echo WARNING: pywin32_postinstall.py script execution might have failed.
     ) else (
         echo pywin32_postinstall.py executed.
@@ -133,7 +137,7 @@ IF EXIST "build" rmdir /s /q "build"
 IF EXIST "%OUTPUT_EXE_NAME%.spec" del "%OUTPUT_EXE_NAME%.spec"
 echo.
 
-%PYTHON_TO_USE% -m PyInstaller --onefile --windowed --name %OUTPUT_EXE_NAME% ^
+%PYTHON_CMD% -m PyInstaller --onefile --windowed --name %OUTPUT_EXE_NAME% ^
 --clean ^
 --log-level %PYINSTALLER_LOG_LEVEL% ^
 --noconfirm ^
@@ -169,11 +173,11 @@ echo.
 --hidden-import=PIL._tkinter_finder ^
 %AGENT_SCRIPT_NAME%
 
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     echo. & echo ******************** & echo *** BUILD FAILED *** & echo ********************
     echo Check the output above for specific PyInstaller errors.
     pause
-    exit /b %errorlevel%
+    exit /b !errorlevel!
 )
 
 echo. & echo ************************ & echo *** BUILD SUCCESSFUL *** & echo ************************
