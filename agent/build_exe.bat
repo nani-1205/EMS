@@ -18,7 +18,6 @@ if errorlevel 1 (
 )
 
 REM --- Configuration ---
-SET PYTHON_EXE=python
 SET VENV_NAME=venv
 SET OUTPUT_EXE_NAME=monitoring_agent
 SET AGENT_SCRIPT_NAME=agent.py
@@ -27,18 +26,20 @@ SET PYINSTALLER_LOG_LEVEL=INFO
 
 REM --- Check for Python and Pip ---
 echo Checking for Python installation...
-%PYTHON_EXE% --version >nul 2>&1
+python --version >nul 2>&1  REM <--- Changed from %PYTHON_EXE% to direct 'python'
 if %errorlevel% neq 0 (
-    echo ERROR: Python interpreter ('%PYTHON_EXE%') not found or not in PATH.
+    echo ERROR: Python interpreter ('python') not found or not in PATH.
+    echo Please ensure Python is installed and added to your system PATH.
     pause
     exit /b 1
 )
 echo Python found.
 
 echo Checking for pip...
-%PYTHON_EXE% -m pip --version >nul 2>&1
+python -m pip --version >nul 2>&1 REM <--- Changed from %PYTHON_EXE% to direct 'python'
 if %errorlevel% neq 0 (
     echo ERROR: pip (Python package manager) not found.
+    echo It's usually installed with Python. Please check your Python installation.
     pause
     exit /b 1
 )
@@ -59,33 +60,21 @@ IF EXIST "%VENV_PATH%\Scripts\activate.bat" (
     echo Virtual environment activated.
 ) ELSE (
     echo No '%VENV_NAME%' virtual environment found in %SCRIPT_DIR%.
-    REM Simplified: We will proceed without venv if not found, or user can create it manually.
-    REM Forcing venv creation in a batch script can be error-prone.
     echo Consider creating a virtual environment manually:
     echo   python -m venv %VENV_NAME%
     echo   %VENV_NAME%\Scripts\activate
-    echo Proceeding with current Python environment.
-    REM choice /C YN /M "Create a new virtual environment named '%VENV_NAME%' (Recommended)?"
-    REM IF ERRORLEVEL 2 (
-    REM    echo Proceeding with current Python environment. Be cautious of global package conflicts.
-    REM ) ELSE (
-    REM    echo Creating new virtual environment '%VENV_NAME%'...
-    REM    %PYTHON_EXE% -m venv %VENV_NAME%
-    REM    if errorlevel 1 ( echo ERROR: Failed to create virtual environment. & pause & exit /b 1 )
-    REM    echo Activating new virtual environment...
-    REM    call "%VENV_NAME%\Scripts\activate.bat"
-    REM    if errorlevel 1 ( echo ERROR: Failed to activate new virtual environment. & pause & exit /b 1 )
-    REM    echo New virtual environment created and activated.
-    REM )
+    echo Proceeding with current Python environment. This may lead to issues.
+    echo It is STRONGLY recommended to use a virtual environment.
+    pause 
 )
 echo.
 
 echo Upgrading pip in the current environment...
-%PYTHON_EXE% -m pip install --upgrade pip
+python -m pip install --upgrade pip
 echo.
 
 echo Installing/Updating core build dependencies (PyInstaller, pywin32, psutil)...
-%PYTHON_EXE% -m pip install --upgrade pyinstaller pywin32 psutil
+python -m pip install --upgrade pyinstaller pywin32 psutil
 if errorlevel 1 (
     echo ERROR: Failed to install/update PyInstaller, pywin32, or psutil.
     pause
@@ -96,7 +85,7 @@ echo.
 
 IF EXIST "%REQUIREMENTS_FILE%" (
     echo Installing agent dependencies from %REQUIREMENTS_FILE%...
-    %PYTHON_EXE% -m pip install -r %REQUIREMENTS_FILE%
+    python -m pip install -r %REQUIREMENTS_FILE%
     if errorlevel 1 (
         echo ERROR: Failed to install agent dependencies from %REQUIREMENTS_FILE%.
         pause
@@ -116,7 +105,6 @@ IF DEFINED VIRTUAL_ENV (
     )
 )
 IF NOT DEFINED PYWIN32_POSTINSTALL_SCRIPT (
-    REM Check common global locations if not in VIRTUAL_ENV or not found there
     FOR /F "delims=" %%G IN ('where pywin32_postinstall.py 2^>nul') DO (
         IF NOT DEFINED PYWIN32_POSTINSTALL_SCRIPT SET PYWIN32_POSTINSTALL_SCRIPT="%%G"
     )
@@ -124,7 +112,7 @@ IF NOT DEFINED PYWIN32_POSTINSTALL_SCRIPT (
 
 IF DEFINED PYWIN32_POSTINSTALL_SCRIPT (
     echo Found pywin32_postinstall.py at !PYWIN32_POSTINSTALL_SCRIPT!
-    %PYTHON_EXE% !PYWIN32_POSTINSTALL_SCRIPT! -install
+    python !PYWIN32_POSTINSTALL_SCRIPT! -install
     if errorlevel 1 (
         echo WARNING: pywin32_postinstall.py script execution might have failed.
     ) else (
@@ -141,7 +129,7 @@ IF EXIST "build" rmdir /s /q "build"
 IF EXIST "%OUTPUT_EXE_NAME%.spec" del "%OUTPUT_EXE_NAME%.spec"
 echo.
 
-%PYTHON_EXE% -m PyInstaller --onefile --windowed --name %OUTPUT_EXE_NAME% ^
+python -m PyInstaller --onefile --windowed --name %OUTPUT_EXE_NAME% ^
 --clean ^
 --log-level %PYINSTALLER_LOG_LEVEL% ^
 --noconfirm ^
