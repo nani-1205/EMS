@@ -57,12 +57,13 @@ echo Checking for Python installation using: %PYTHON_CMD%
 SET PYTHON_CHECK_ERRORLEVEL=!errorlevel!
 echo Python version command executed. Stored Errorlevel: !PYTHON_CHECK_ERRORLEVEL!
 REM Comment moved to its own line
-IF !PYTHON_CHECK_ERRORLEVEL! NEQ 0 (
+IF !PYTHON_CHECK_ERRORLEVEL! EQU 0 (
+    echo Python check successful (Errorlevel: !PYTHON_CHECK_ERRORLEVEL!).
+) ELSE (
     echo ERROR: Python interpreter (!PYTHON_CMD!) did not execute correctly (Errorlevel: !PYTHON_CHECK_ERRORLEVEL!).
     pause
     exit /b 1
 )
-echo Python check successful.
 echo.
 
 REM --- Check for Pip ---
