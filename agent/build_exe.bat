@@ -47,32 +47,39 @@ IF EXIST "%VENV_PATH%\Scripts\activate.bat" (
     )
 ) ELSE (
     echo No '%VENV_NAME%' virtual environment found. Attempting to use global 'python'.
-    echo It is STRONGLY recommended to create and use a virtual environment.
     SET PYTHON_CMD=python
 )
 echo.
 
-REM --- Check for Python (using direct execution without >nul) ---
+REM --- Check for Python ---
 echo Checking for Python installation using: %PYTHON_CMD%
 %PYTHON_CMD% --version
-if !errorlevel! neq 0 (
-    echo ERROR: Python interpreter (!PYTHON_CMD!) not found or did not execute correctly (Errorlevel: !errorlevel!).
+SET PYTHON_CHECK_ERRORLEVEL=!errorlevel! REM Store errorlevel immediately
+
+echo Python version command executed. Stored Errorlevel: !PYTHON_CHECK_ERRORLEVEL!
+
+IF !PYTHON_CHECK_ERRORLEVEL! NEQ 0 (
+    echo ERROR: Python interpreter (!PYTHON_CMD!) did not execute correctly (Errorlevel: !PYTHON_CHECK_ERRORLEVEL!).
     echo Please ensure Python (and the venv if used) is correctly set up and in PATH.
     pause
     exit /b 1
 )
-echo Python check successful (Errorlevel: !errorlevel!).
+echo Python check successful.
 echo.
 
-REM --- Check for Pip (using direct execution without >nul) ---
+REM --- Check for Pip ---
 echo Checking for pip using: %PYTHON_CMD%
 %PYTHON_CMD% -m pip --version
-if !errorlevel! neq 0 (
-    echo ERROR: pip (Python package manager) not found for !PYTHON_CMD! (Errorlevel: !errorlevel!).
+SET PIP_CHECK_ERRORLEVEL=!errorlevel! REM Store errorlevel immediately
+
+echo Pip version command executed. Stored Errorlevel: !PIP_CHECK_ERRORLEVEL!
+
+IF !PIP_CHECK_ERRORLEVEL! NEQ 0 (
+    echo ERROR: pip (Python package manager) not found for !PYTHON_CMD! (Errorlevel: !PIP_CHECK_ERRORLEVEL!).
     pause
     exit /b 1
 )
-echo pip check successful (Errorlevel: !errorlevel!).
+echo pip check successful.
 echo.
 
 echo Upgrading pip in the current environment...
