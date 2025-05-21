@@ -4,17 +4,12 @@
 {% block head_extra %}
     {{ super() }}
     {# Chart.js and Litepicker are assumed to be in layout.html or loaded globally #}
-    {# If not, add their CDN links here #}
-    {# <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script> #}
-    {# <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/> #}
-    {# <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js" defer></script> #}
 {% endblock %}
 
 {% block content %}
-<div id="dashboard-page" class="page"> {# `active` class is not needed if Flask renders this page directly #}
+<div id="dashboard-page" class="page">
     <div class="page-header">
         <h1 class="page-title">Dashboard</h1>
-        {# Any buttons or actions for the dashboard header can go here #}
     </div>
 
     <div class="dashboard-filters">
@@ -47,10 +42,14 @@
         <div class="dashboard-col-left card chart-container">
             <h3 class="card-title">Top 5 websites & applications <i class="fas fa-info-circle info-icon" title="Total active time during selected period for {{ selected_employee_id or 'all employees' }}"></i></h3>
             <div style="display: flex; align-items: center; min-height: 180px;">
-                 <canvas id="topSitesChart" style="max-width: 160px; max-height: 160px; margin: 0 auto 15px auto; display: block;"></canvas> {# Centered canvas #}
+                 <canvas id="topSitesChart" style="max-width: 160px; max-height: 160px; margin: 0 auto 15px auto; display: block;"></canvas>
                 <div class="chart-legend" style="flex-grow: 1; margin-left: 20px;">
                     <ul id="topSitesLegend">
-                        {% if top_websites %}
+                        {# This part is now correctly handled by JavaScript in scripts_extra if populated by JS,
+                           or can be pre-rendered if top_websites is small enough and colors are managed.
+                           For simplicity if JS populates, this Jinja loop is a fallback or initial state.
+                        #}
+                        {% if top_websites and top_websites|length > 0 %}
                             {% for site in top_websites %}
                             <li>
                                 <span><span class="legend-color" style="background-color: #ccc;"></span>{{ site.name | truncate(25) }}</span> 
@@ -70,13 +69,15 @@
             <table>
                 <thead><tr><th>Name</th><th>Man Days</th><th>Work Hours (Total)</th></tr></thead>
                 <tbody>
-                    {% if work_hours_data %}
+                    {# CORRECTED JINJA SYNTAX HERE #}
+                    {% if work_hours_data and work_hours_data|length > 0 %}
                         {% for item in work_hours_data %}
                         <tr><td>{{ item.name | truncate(25) }}</td><td>{{ item.man_days | default('0', true) }}</td><td>{{ item.work_hours | default('--:--:--', true) }}</td></tr>
                         {% endfor %}
                     {% else %}
                         <tr><td colspan="3" class="text-center text-muted" style="padding:20px;">No work hour data found for this period.</td></tr>
-                    {% endfor %}
+                    {% endif %}
+                    {# PREVIOUSLY HAD AN EXTRA MISPLACED ENDFOR HERE #}
                 </tbody>
             </table>
             </div>
@@ -86,7 +87,6 @@
 {% endblock %}
 
 {% block scripts_extra %}
-{# Litepicker and Chart.js initialization scripts specific to this dashboard #}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Litepicker for Dashboard
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
         employeeSelectDashboard.addEventListener('change', function() {
             const selectedEmployee = this.value || 'all';
             const urlParams = new URLSearchParams(window.location.search);
-            const period = urlParams.get('period') || 'day'; // Default to day if not set
+            const period = urlParams.get('period') || 'day';
             const start = urlParams.get('start');
             const end = urlParams.get('end');
 
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Chart.js for Top Sites
     const ctx = document.getElementById('topSitesChart');
-    const topSitesLegendElement = document.getElementById('topSitesLegend'); // Get the legend UL
+    const topSitesLegendElement = document.getElementById('topSitesLegend');
     let topSitesData = [];
 
     try {
@@ -162,9 +162,9 @@ document.addEventListener('DOMContentLoaded', function() {
         options: { 
             responsive: true, 
             maintainAspectRatio: false, 
-            cutout: '65%', // Donut hole size
+            cutout: '65%',
             plugins: { 
-                legend: { display: false }, // Using custom legend
+                legend: { display: false }, 
                 tooltip: { 
                     callbacks: { 
                         label: function(c){
@@ -186,31 +186,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
       
-      // Populate custom legend if it was not pre-rendered by Jinja
-      if(topSitesLegendElement && topSitesLegendElement.children.length === 0 || (topSitesLegendElement.children.length === 1 && topSitesLegendElement.firstElementChild.classList.contains('text-muted'))) {
-          topSitesLegendElement.innerHTML = ''; // Clear "No data" message if present
-          topSitesData.forEach((site, index) => {
-              const color = chartBackgroundColors[index % chartBackgroundColors.length];
-              const duration = site.duration || 0;
-              const hours = Math.floor(duration / 3600);
-              const minutes = Math.floor((duration % 3600) / 60);
-              const seconds = duration % 60;
-              let formattedTime = '';
-              if (hours > 0) formattedTime += `${String(hours).padStart(2, '0')}:`;
-              formattedTime += `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-              
-              topSitesLegendElement.innerHTML += `
-                <li>
-                    <span><span class="legend-color" style="background-color: ${color};"></span>${site.name ? String(site.name).substring(0,25) : 'Unknown'}</span> 
-                    <span>${formattedTime}</span>
-                </li>`;
-          });
-           if(topSitesData.length === 0 && topSitesLegendElement) {
-                topSitesLegendElement.innerHTML = '<li class="text-muted small">No website/app data for this selection.</li>';
-           }
+      if(topSitesLegendElement) {
+          topSitesLegendElement.innerHTML = ''; 
+          if (topSitesData.length > 0) {
+            topSitesData.forEach((site, index) => {
+                const color = chartBackgroundColors[index % chartBackgroundColors.length];
+                const duration = site.duration || 0;
+                const hours = Math.floor(duration / 3600);
+                const minutes = Math.floor((duration % 3600) / 60);
+                const seconds = duration % 60;
+                let formattedTime = '';
+                if (hours > 0) formattedTime += `${String(hours).padStart(2, '0')}:`;
+                formattedTime += `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                topSitesLegendElement.innerHTML += `
+                    <li>
+                        <span><span class="legend-color" style="background-color: ${color};"></span>${site.name ? String(site.name).substring(0,25) : 'Unknown'}</span> 
+                        <span>${formattedTime}</span>
+                    </li>`;
+            });
+          } else {
+             topSitesLegendElement.innerHTML = '<li class="text-muted small">No website/app data for this selection.</li>';
+          }
       }
 
-    } else if (ctx) { // No data to display
+    } else if (ctx) { 
         const context = ctx.getContext('2d');
         context.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         context.textAlign = 'center'; context.textBaseline = 'middle'; context.fillStyle = '#6c757d'; context.font = "14px sans-serif";
