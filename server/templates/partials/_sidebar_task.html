@@ -45,8 +45,9 @@
         <i class="fas fa-chevron-down collapse-icon ms-auto"></i>
     </a>
     <div class="collapse" id="employeesOnlineCollapse"> {# Bootstrap 'collapse' class #}
-        <ul id="sidebarEmployeeList" class="list-unstyled ps-3"> {# list-unstyled removes bullets, ps-3 adds padding #}
-            {# Initial population by Flask (optional, JS will update) #}
+        <ul id="sidebarEmployeeList" class="list-unstyled ps-3">
+            {# JavaScript will primarily populate this via polling #}
+            {# This initial population is a fallback or for non-JS scenarios #}
             {% if active_employees_for_sidebar and active_employees_for_sidebar|length > 0 %}
                 {% for emp in active_employees_for_sidebar %}
                     <li>
@@ -67,7 +68,8 @@
 
 {% if pending_rename_count and pending_rename_count > 0 %}
 <div class="sidebar-notification pending-notification">
-    <a href="{{ url_for('users.list_users', q='pending_rename') }}" {# Example of a direct link to filtered users #}
+    {# Link to users page, pre-filtered for 'pending_rename' status #}
+    <a href="{{ url_for('users.list_users', status_filter='pending_rename') }}" 
        title="{{ pending_rename_count }} user(s) need configuration">
         <i class="fas fa-exclamation-triangle fa-fw"></i> 
         <span>{{ pending_rename_count }} User(s) Pending</span>
@@ -76,5 +78,5 @@
 {% endif %}
 
 <div class="sidebar-footer mt-auto"> 
-    <span class="text-muted small">TekPossible Monitor v{{ config.APP_VERSION | default('1.0.0') }}</span> {# Example version #}
+    <span class="text-muted small">TekPossible Monitor v{{ config.APP_VERSION | default('1.0.0') }}</span>
 </div>

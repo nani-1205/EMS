@@ -13,8 +13,8 @@ html {
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    background-color: #1d548a; /* Light gray overall background */
-    color: #212529; /* Default text color (Bootstrap's default body text) */
+    background-color: #f4f7fc; /* Lighter, slightly bluish page background */
+    color: #343a40; /* Default text color (Bootstrap's default body text) */
     display: flex;
     height: 100vh;
     overflow: hidden;
@@ -28,7 +28,7 @@ a {
 }
 a:hover {
     color: #0056b3;
-    text-decoration: underline;
+    /* text-decoration: underline; */ /* Often prefer no underline for app-like UIs */
 }
 
 /* ==========================================================================
@@ -43,15 +43,15 @@ a:hover {
 .sidebar {
     width: 260px;
     background-color: #2c3e50; /* Dark Slate Blue/Gray */
-    color: #e0e0e0; /* Light text for contrast */
-    padding-top: 0; /* Header can handle top spacing if inside sidebar */
+    color: #e0e0e0; /* Lighter text on dark sidebar */
+    padding-top: 0; 
     display: flex;
     flex-direction: column;
     height: 100%;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.12); /* Softer shadow */
-    z-index: 100; /* Ensure sidebar is above content if overlapping during transitions */
+    box-shadow: 3px 0 12px rgba(0, 0, 0, 0.08); /* Slightly more defined shadow */
+    z-index: 100; 
 }
 
 .main-content-wrapper {
@@ -59,231 +59,184 @@ a:hover {
     display: flex;
     flex-direction: column;
     height: 100%;
-    background-color: #f8f9fa;
-    overflow: hidden; /* Prevent wrapper from causing scrollbars */
+    background-color: #f4f7fc; /* Match body background */
+    overflow: hidden; 
 }
 .main-content-wrapper.main-content-full-width {
     width: 100%;
 }
 
 .header {
-    background-color: #ffffff;
-    color: #343a40; /* Darker text for header */
+    background-color: #2c3e50; /* DARK HEADER to match sidebar */
+    color: #ffffff;             /* White text for contrast */
     padding: 0 25px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     height: 65px;
     flex-shrink: 0;
-    border-bottom: 1px solid #dee2e6; /* Standard Bootstrap border */
+    border-bottom: 1px solid #1e2b37; /* Darker border for separation */
+    /* box-shadow: 0 2px 5px rgba(0,0,0,0.1); */ /* Optional shadow for dark header */
 }
 
 .logo {
     font-size: 1.5em;
     font-weight: 600;
-    color: #343a40;
+    color: #ffffff; /* Logo text white */
 }
-.logo i.fas { /* Target Font Awesome icon */
+.logo i.fas { 
     margin-right: 10px;
-    color: #007bff; /* Primary blue */
+    color: #3498db; /* Accent blue for icon, or change to white/light gray */
 }
 
 .content-area {
     flex-grow: 1;
-    padding: 25px 30px; /* Slightly more horizontal padding */
-    overflow-y: auto; /* Enable scrolling for main content only */
+    padding: 25px 30px; 
+    overflow-y: auto; 
 }
 
 /* ==========================================================================
    3. Sidebar Navigation & Elements
    ========================================================================== */
-.sidebar-header { /* Optional: If you have a logo/title inside sidebar itself */
-    padding: 18px 25px;
-    text-align: center;
-    border-bottom: 1px solid #3a5068; /* Darker separator */
-    font-size: 1.5em;
-    font-weight: 600;
-    color: #ffffff;
-}
-.sidebar-header i { margin-right: 10px; color: #3498db; }
-
 .sidebar-nav {
-    margin-top: 10px; /* Space from top or sidebar-header */
-    flex-grow: 1; /* Allow nav to take available space */
+    margin-top: 15px; 
+    flex-grow: 1; 
 }
 .sidebar-nav ul {
     list-style-type: none;
     padding-left: 0;
 }
 .sidebar-nav li a {
-    display: flex;
-    align-items: center;
-    padding: 14px 25px; /* Consistent padding */
-    color: #adb5bd; /* Lighter gray for inactive links */
-    text-decoration: none;
-    font-size: 0.925em; /* Slightly larger */
-    font-weight: 400;
-    transition: all 0.2s ease-in-out;
-    border-left: 4px solid transparent; /* Active indicator */
-    margin: 2px 0; /* Small vertical margin */
+    display: flex; align-items: center; padding: 13px 25px; /* Slightly adjusted padding */
+    color: #adb5bd; text-decoration: none; font-size: 0.925em; 
+    font-weight: 400; transition: all 0.2s ease-in-out;
+    border-left: 4px solid transparent; margin: 3px 0; /* More vertical separation */
 }
 .sidebar-nav li a i.fas {
-    margin-right: 15px;
-    width: 20px; /* Fixed width for alignment */
-    text-align: center;
-    font-size: 1.1em; /* Slightly larger icons */
-    color: #8699ad; /* Default icon color */
-    transition: color 0.2s ease-in-out;
+    margin-right: 15px; width: 20px; text-align: center; font-size: 1.05em;
+    color: #8699ad; transition: color 0.2s ease-in-out;
 }
 .sidebar-nav li a:hover {
-    background-color: rgba(255, 255, 255, 0.07); /* Subtle hover */
+    background-color: rgba(255, 255, 255, 0.07); 
     color: #ffffff;
-    border-left-color: #5dade2; /* Light blue accent on hover */
+    border-left-color: #52b3dd; /* Lighter blue accent on hover */
 }
-.sidebar-nav li a:hover i.fas {
-    color: #5dade2;
-}
+.sidebar-nav li a:hover i.fas { color: #52b3dd; }
 .sidebar-nav li a.active {
-    background-color: #007bff; /* Primary blue for active */
-    color: #ffffff;
-    font-weight: 500; /* Bolder active text */
-    border-left-color: #ffffff; /* White indicator for active */
+    background-color: #007bff; /* Bootstrap primary blue for active */
+    color: #ffffff; font-weight: 500;
+    border-left-color: #ffffff; 
 }
-.sidebar-nav li a.active i.fas {
-    color: #ffffff; /* White icon for active item */
-}
-.sidebar-nav li a span {
-    flex-grow: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+.sidebar-nav li a.active i.fas { color: #ffffff; }
+.sidebar-nav li a span { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Collapsible Employees Online Section */
-.sidebar-section.collapsible-section {
-    padding: 0;
-    margin-top: 15px;
-    border-top: 1px solid #3a5068; /* Slightly darker separator */
-}
+.sidebar-section.collapsible-section { padding: 0; margin-top: 20px; border-top: 1px solid #3a5068; }
 .sidebar-section-toggle {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 25px; text-decoration: none; color: #adb5bd;
-    font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.8px;
-    font-weight: 600; cursor: pointer; transition: background-color 0.2s ease;
-    width: 100%;
+    padding: 13px 25px; text-decoration: none; color: #adb5bd;
+    font-size: 0.7em; text-transform: uppercase; letter-spacing: 1px; /* More spacing */
+    font-weight: 600; cursor: pointer; transition: background-color 0.2s ease; width: 100%;
 }
 .sidebar-section-toggle:hover { background-color: rgba(255,255,255,0.05); color: #ffffff; }
 .sidebar-section-toggle .online-count {
-    background-color: #28a745; /* Bootstrap success green */
-    color: white; border-radius: 10px; min-width: 20px; height: 20px;
+    background-color: #28a745; color: white; border-radius: 10px; min-width: 20px; height: 20px;
     padding: 0 6px; display: inline-flex; justify-content: center; align-items: center;
-    font-size: 0.9em; /* Make count slightly larger */ font-weight: bold;
-    margin-left: 8px; margin-right: 8px;
+    font-size: 0.9em; font-weight: bold; margin-left: 8px; margin-right: 8px;
 }
 .sidebar-section-toggle .collapse-icon { transition: transform 0.25s ease; font-size: 0.8em; }
 .sidebar-section-toggle[aria-expanded="true"] .collapse-icon { transform: rotate(180deg); }
-.sidebar-section-toggle span:first-child { color: #ced4da; } /* Main text of toggle */
+.sidebar-section-toggle span:first-child { color: #ced4da; }
 
-#employeesOnlineCollapse.collapse.show {
-    background-color: rgba(0,0,0,0.1); /* Subtle background for expanded list */
-    border-bottom: 1px solid #3a5068;
-}
-#employeesOnlineCollapse ul {
-    list-style-type: none; max-height: 160px; overflow-y: auto;
-    padding: 8px 10px 8px 25px; /* Top/bottom padding + indent */
-}
+#employeesOnlineCollapse.collapse.show { background-color: rgba(0,0,0,0.1); border-bottom: 1px solid #3a5068; }
+#employeesOnlineCollapse ul { list-style-type: none; max-height: 160px; overflow-y: auto; padding: 8px 10px 8px 25px; }
 #employeesOnlineCollapse li { padding: 6px 0; font-size: 0.85em; display: flex; align-items: center; color: #adb5bd; }
 #employeesOnlineCollapse li a { color: #adb5bd; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; }
 #employeesOnlineCollapse li a:hover { color: #ffffff; }
 .online-dot { width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; margin-right: 10px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2); }
 
 .sidebar-notification { padding: 10px 0; margin-top: 10px; border-top: 1px solid #3a5068; }
-.sidebar-notification a {
-    display: flex; align-items: center; justify-content: flex-start; /* Align left */
-    padding: 10px 25px; text-decoration: none; font-size: 0.85em;
-    transition: all 0.2s ease;
-}
-.sidebar-notification.pending-notification a { color: #ffc107; /* Bootstrap warning yellow */ }
+.sidebar-notification a { display: flex; align-items: center; justify-content: flex-start; padding: 10px 25px; text-decoration: none; font-size: 0.85em; transition: all 0.2s ease; }
+.sidebar-notification.pending-notification a { color: #ffc107; }
 .sidebar-notification a:hover { color: #ffffff; background-color: rgba(255,255,255,0.07); }
 .sidebar-notification i.fas { margin-right: 12px; width:20px; text-align: center;}
 
-.sidebar-footer {
-    padding: 15px 20px; border-top: 1px solid #3a5068;
-    text-align: center; margin-top:auto; background-color: #233140; /* Slightly darker footer */
-    font-size: 0.8em; color: #6c757d;
-}
+.sidebar-footer { padding: 15px 20px; border-top: 1px solid #3a5068; text-align: center; margin-top:auto; background-color: #233140; font-size: 0.75em; color: #6c757d; }
 
 /* ==========================================================================
-   4. Header Admin Dropdown (Leveraging Bootstrap classes primarily)
+   4. Header Admin Dropdown
    ========================================================================== */
-.header .admin-menu .dropdown-toggle {
-    color: #495057;
+.header .admin-menu .dropdown-toggle { /* For the button itself */
+    color: #e0e0e0; /* Light text on dark header */
     font-weight: 500;
     background-color: transparent;
     border: none;
+    padding: 0.5rem 0.75rem;
 }
 .header .admin-menu .dropdown-toggle:hover,
-.header .admin-menu .dropdown-toggle:focus {
-    background-color: #e9ecef;
-    color: #212529;
+.header .admin-menu .dropdown-toggle:focus,
+.header .admin-menu .dropdown-toggle.show { /* .show is added by Bootstrap when open */
+    background-color: rgba(255,255,255,0.1); /* Subtle light hover on dark header */
+    color: #ffffff;
+    box-shadow: none;
 }
-.header .admin-menu .dropdown-menu { /* Bootstrap class target */
-    border-radius: .375rem; /* Softer radius */
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15); /* Standard Bootstrap shadow */
-    border: 1px solid rgba(0,0,0,.1);
-    margin-top: .25rem !important; /* Align with button bottom */
+.header .admin-menu .dropdown-toggle::after { margin-left: .45em; vertical-align: .15em; }
+.admin-dropdown.dropdown-menu { /* Styles the UL dropdown */
+    border-radius: .375rem; 
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.175); /* Slightly stronger shadow */
+    border: 1px solid rgba(0,0,0,.15);
+    margin-top: .35rem !important; /* Ensure it appears below button */
+    min-width: 200px;
+    font-size: 0.9rem; /* Base font for dropdown items */
 }
-.admin-dropdown .dropdown-item { /* Bootstrap class target */
-    display: flex; align-items: center;
-    padding: .5rem 1.25rem; /* Bootstrap-like padding */
-    font-size: 0.9em;
+.admin-dropdown .dropdown-item {
+    display: flex; align-items: center; padding: .6rem 1.25rem;
+    color: #343a40; /* Dark text for items on white background */
 }
-.admin-dropdown .dropdown-item i.fas {
-    margin-right: .75rem; width: 16px; color: #495057;
-}
-.admin-dropdown .dropdown-item:active { /* Pressed state */
-    background-color: #007bff;
-    color: #fff;
-}
-.admin-dropdown .dropdown-item:active i.fas {
-    color: #fff;
-}
+.admin-dropdown .dropdown-item i.fas { margin-right: .75rem; width: 16px; color: #495057; text-align: center; }
+.admin-dropdown .dropdown-item:active, .admin-dropdown .dropdown-item:focus { background-color: #007bff; color: #fff; }
+.admin-dropdown .dropdown-item:active i.fas, .admin-dropdown .dropdown-item:focus i.fas { color: #fff; }
+.admin-dropdown .dropdown-item:hover { background-color: #f0f3f5; }
+.admin-dropdown .dropdown-divider { margin: .5rem 0; border-top: 1px solid #e0e0e0; }
+
 
 /* ==========================================================================
    5. Page Structure & General Elements (Titles, Forms, Tables, Cards)
    ========================================================================== */
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #e9ecef; }
-.page-title { font-size: 1.8em; color: #343a40; font-weight: 600; }
+.page-title { font-size: 1.75em; color: #343a40; font-weight: 600; }
 
-/* Using Bootstrap for Buttons (.btn, .btn-primary etc.) - these are overrides or custom additions */
-.btn-edit { background-color: #ffc107; border-color: #ffc107; color: #212529; } /* Warning yellow for edit */
+/* Buttons will primarily use Bootstrap .btn classes for consistency */
+/* Custom button styles if needed can go here */
+.btn-edit { background-color: #ffc107; border-color: #ffc107; color: #212529; }
 .btn-edit:hover { background-color: #e0a800; border-color: #d39e00; }
 
-/* Forms - Rely on Bootstrap, these are for specific tweaks */
+/* Forms - Bootstrap will style these. Add minor tweaks if needed. */
 .form-group { margin-bottom: 1.25rem; }
 .form-label { font-weight: 500; color: #495057; margin-bottom: .5rem; font-size: 0.9rem; }
+.filter-form { background-color: #ffffff; border-radius: .375rem; border: 1px solid #dee2e6; }
 .filter-form .form-label { font-size: 0.85rem; }
-.filter-form .form-control, .filter-form .form-select { font-size: 0.85rem; }
+.filter-form .form-control, .filter-form .form-select { font-size: 0.875rem; }
 .form-actions { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e9ecef; }
 
-/* Tables - Rely on Bootstrap (.table, .table-striped, .table-hover) */
-.table-container { box-shadow: 0 1px 3px rgba(0,0,0,.1); } /* Softer shadow for table container */
-th { white-space: nowrap; }
-td { vertical-align: middle; }
+/* Tables - Bootstrap .table, .table-striped, .table-hover for base */
+.table-container { box-shadow: 0 1px 3px rgba(0,0,0,.075); border: 1px solid #dee2e6; border-radius: .375rem; overflow:hidden; }
+.table th { white-space: nowrap; font-weight: 500; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.table td { vertical-align: middle; font-size: 0.9rem; }
 
-/* Cards - Rely on Bootstrap (.card, .card-header, .card-body, .card-footer) */
-.card { border: 1px solid #dee2e6; }
-.card-header { background-color: #f8f9fa; font-size: 1rem; font-weight: 600; }
+/* Cards - Bootstrap .card styling as base */
+.card { border: 1px solid #dee2e6; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+.card-header { background-color: #f8f9fa; font-size: 1rem; font-weight: 600; display:flex; justify-content:space-between; align-items:center; }
 
 /* ==========================================================================
    6. Dashboard Specific Styles
    ========================================================================== */
 .dashboard-filters { margin-bottom: 25px; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-.dashboard-filters .btn-group .btn.active { background-color: #0d6efd; color:white; } /* Bootstrap primary active */
+.dashboard-filters .btn-group .btn.active { background-color: #0d6efd; color:white; }
 .dashboard-filters .form-select { min-width: 200px; max-width: 280px; }
 .dashboard-filters .date-info { font-size: 0.9em; color: #6c757d; margin-left: auto; white-space: nowrap;}
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1.25rem; margin-bottom: 25px; }
-.stat-card .card-body { padding: 1.25rem; } /* Ensure padding if using .card directly */
+.stat-card .card-body { padding: 1.25rem; }
 .stat-card .card-title { font-size: 0.9em; color: #6c757d; margin-bottom: 0.5rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;}
 .stat-card .card-text { font-size: 2em; font-weight: 700; color: #343a40; line-height: 1.1; }
 .dashboard-row { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
@@ -294,58 +247,51 @@ td { vertical-align: middle; }
 .chart-legend li { display: flex; justify-content: space-between; align-items: center; padding: .35rem 0; font-size: 0.875em; border-bottom: 1px solid #f1f1f1; }
 .chart-legend li:last-child { border-bottom: none; }
 .chart-legend .legend-color { width: 12px; height: 12px; border-radius: .2rem; margin-right: .75rem; display: inline-block; flex-shrink: 0; }
-.chart-legend span:first-child { display: flex; align-items: center; margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 80px); /* Adjust if times are wider */ }
+.chart-legend span:first-child { display: flex; align-items: center; margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 80px); }
 .chart-legend span:last-child { font-weight: 500; color: #495057; flex-shrink: 0; }
 .work-hours-table .card-header i.fas { color: #6c757d; cursor: pointer; font-size: 1em; }
 
 /* ==========================================================================
    7. Other Page Specifics (Reports, Settings, Users)
    ========================================================================== */
-/* Reports Center Cards */
+.search-bar.card { box-shadow: none; border-color: #ced4da; } /* For Users page search */
 .report-cards-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
 .report-card i.fas { font-size: 2.5em; color: #0d6efd; margin-bottom: 1rem; }
 .report-card h5.card-title { font-size: 1.25em; margin-bottom: 0.75rem; }
 .report-card p.card-text { font-size: 0.9em; color: #6c757d; margin-bottom: 1.25rem; flex-grow: 1; min-height: 50px; }
 .report-card .btn { margin-top: auto; }
-
-/* Screenshot Report Grid */
 .screenshot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 1rem; margin-top: 1.25rem; }
 .screenshot-item .card-img-top { width: 100%; height: 120px; object-fit: cover; cursor: pointer; background-color: #e9ecef; border-bottom: 1px solid #dee2e6; }
 .screenshot-item .card-footer { padding: .5rem .75rem; font-size: 0.75em; background-color: #f8f9fa;}
+.pagination { margin-top: 25px; display: flex; justify-content: center; list-style: none; padding-left: 0; flex-wrap: wrap; }
+.pagination .page-item { margin: 3px; }
+/* Pagination .page-link uses Bootstrap's default styling, no need to redefine if Bootstrap CSS is present */
 
-/* Max width for forms on larger screens */
+.help-button { position: fixed; bottom: 25px; right: 25px; background-color: #dc3545; color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.6em; box-shadow: 0 3px 8px rgba(0,0,0,0.25); cursor: pointer; z-index: 1030; transition: background-color 0.2s ease; }
+.help-button:hover { background-color: #c82333; }
 .form-container { max-width: 700px; margin-left: auto; margin-right: auto; }
 .settings-form-container { max-width: 550px; margin-left: auto; margin-right: auto; }
 
-/* Help Button */
-.help-button { position: fixed; bottom: 25px; right: 25px; background-color: #dc3545; color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.6em; box-shadow: 0 3px 8px rgba(0,0,0,0.25); cursor: pointer; z-index: 1030; transition: background-color 0.2s ease; }
-.help-button:hover { background-color: #c82333; }
-
-/* Bootstrap Alert styling (relies on Bootstrap CSS being loaded for full effect) */
-/* The .alert-dismissible and .btn-close styling will come from Bootstrap */
+/* Alerts use Bootstrap's default styling */
 
 /* ==========================================================================
    8. Responsive Adjustments
    ========================================================================== */
-@media (max-width: 992px) { /* Tablet and smaller */
-    .sidebar { width: 70px; }
-    .sidebar .sidebar-header { padding: 18px 10px; font-size: 1.2em; }
-    .sidebar .sidebar-header i { margin-right: 0; } /* Hide text by hiding span */
+@media (max-width: 992px) { 
+    .sidebar { width: 75px; /* Slightly wider collapsed */ }
+    .sidebar .sidebar-header { display: none; } /* Hide header text in collapsed */
     .sidebar .sidebar-nav li a span, 
     .sidebar .sidebar-section-toggle span:first-child,
+    .sidebar #employeesOnlineCollapse ul, /* Hide the list itself to only show toggle */
     .sidebar .sidebar-notification a span { display: none; }
     .sidebar .sidebar-nav li a { justify-content: center; padding: 15px 10px; }
-    .sidebar .sidebar-nav li a i.fas { margin-right: 0; font-size: 1.3em; }
-    .sidebar .sidebar-section-toggle { justify-content: center; }
-    .sidebar .sidebar-section-toggle .online-count { margin-left: 0; }
+    .sidebar .sidebar-nav li a i.fas { margin-right: 0; font-size: 1.4em; } /* Larger icons */
+    .sidebar .sidebar-section-toggle { justify-content: center; padding: 12px 10px;}
+    .sidebar .sidebar-section-toggle .online-count { margin-left: 0; font-size: 0.8em; }
     .sidebar .sidebar-section-toggle .collapse-icon { margin-left: 5px; }
-    #employeesOnlineCollapse ul { padding: 8px 10px; } /* Adjust padding for collapsed list */
-    #employeesOnlineCollapse li a { /* Don't show text in collapsed online list */ display:none; }
-    #employeesOnlineCollapse li .online-dot { margin-right: 0; }
-
-
     .sidebar .sidebar-notification a { justify-content: center; }
-    .sidebar .sidebar-notification i.fas { margin-right: 0; font-size: 1.1em; }
+    .sidebar .sidebar-notification i.fas { margin-right: 0; font-size: 1.2em; }
+    .sidebar .sidebar-footer { display:none; } /* Hide footer in collapsed */
 
     .dashboard-row { flex-direction: column; }
     .dashboard-col-left, .dashboard-col-right { flex: none; width: 100%; min-width: auto; }
@@ -353,23 +299,25 @@ td { vertical-align: middle; }
 }
 
 @media (max-width: 768px) { /* Mobile */
-    .dashboard-filters { flex-direction: column; align-items: stretch; }
-    .dashboard-filters .btn-group, .dashboard-filters .form-select { width: 100%; margin-bottom: 10px; }
-    .dashboard-filters .date-info { width: 100%; text-align: center; margin-left: 0; margin-top: 5px; }
+    .sidebar { width: 0; overflow: hidden; /* Example: Fully hide sidebar on mobile, needs JS to toggle */ }
+    .main-content-wrapper { width: 100%; } /* Make content full width */
     .header { padding: 0 15px; height: 60px;}
     .logo { font-size: 1.2em; }
     .admin-menu-button { font-size: 0.9em; }
     .content-area { padding: 20px 15px; }
-    .page-title { font-size: 1.5em; }
+    .page-title { font-size: 1.6em; }
+    .dashboard-filters { flex-direction: column; align-items: stretch; }
+    .dashboard-filters .btn-group, .dashboard-filters .form-select { width: 100%; margin-bottom: 10px; }
+    .dashboard-filters .date-info { width: 100%; text-align: center; margin-left: 0; margin-top: 5px; }
+    .stats-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; }
+    .stat-card .card-text { font-size: 1.5em; }
+    .btn { padding: 8px 15px; font-size: 0.9em; }
+    .btn-sm { padding: 5px 10px; font-size: 0.85em; }
     .screenshot-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; }
-    .stats-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; }
-    .stat-card .card-text { font-size: 1.4em; }
-    .btn { padding: 8px 15px; font-size: 0.875em; }
-    .btn-sm { padding: 5px 10px; font-size: 0.8em; }
 }
 
-/* Scrollbar styling (optional, WebKit browsers) */
+/* Scrollbar styling */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #f0f3f5; border-radius: 10px; }
-::-webkit-scrollbar-thumb { background: #ced4da; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #adb5bd; }
+::-webkit-scrollbar-track { background: #e9ecef; border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: #adb5bd; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #6c757d; }
