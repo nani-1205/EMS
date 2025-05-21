@@ -13,7 +13,7 @@ html {
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    background-color: #f8f9fa; /* Light gray overall background */
+    background-color: #1d548a; /* Light gray overall background */
     color: #212529; /* Default text color (Bootstrap's default body text) */
     display: flex;
     height: 100vh;
