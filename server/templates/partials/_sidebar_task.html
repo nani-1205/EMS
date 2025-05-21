@@ -5,7 +5,7 @@
             <a href="{{ url_for('dashboard.view_dashboard') }}" 
                class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" 
                title="Dashboard">
-                <i class="fas fa-tachometer-alt fa-fw"></i> {# Added fa-fw for fixed width #}
+                <i class="fas fa-tachometer-alt fa-fw"></i> 
                 <span>Dashboard</span>
             </a>
         </li>
@@ -13,7 +13,7 @@
             <a href="{{ url_for('users.list_users') }}" 
                class="nav-link {% if active_page == 'users' %}active{% endif %}" 
                title="Users & Teams">
-                <i class="fas fa-users fa-fw"></i> {# Added fa-fw #}
+                <i class="fas fa-users fa-fw"></i> 
                 <span>Users & Teams</span>
             </a>
         </li>
@@ -21,7 +21,7 @@
             <a href="{{ url_for('reports.index') }}" 
                class="nav-link {% if active_page == 'reports' %}active{% endif %}" 
                title="Reports">
-                <i class="fas fa-chart-bar fa-fw"></i> {# Added fa-fw #}
+                <i class="fas fa-chart-bar fa-fw"></i> 
                 <span>Reports</span>
             </a>
         </li>
@@ -29,44 +29,51 @@
             <a href="{{ url_for('settings.index') }}" 
                class="nav-link {% if active_page == 'settings' %}active{% endif %}" 
                title="Settings">
-                <i class="fas fa-cog fa-fw"></i> {# Added fa-fw #}
+                <i class="fas fa-cog fa-fw"></i> 
                 <span>Settings</span>
             </a>
         </li>
     </ul>
 </nav>
-<div class="employees-online">
-    <h3>
-        <span>EMPLOYEES ONLINE</span> 
-        <span class="online-count" id="sidebarOnlineCount">
-            {# This count will be updated by script_task.js polling #}
-            {{ employees_online_count | default('0') }} 
-        </span>
-    </h3>
-    <ul id="sidebarEmployeeList">
-        {# This list will be populated by script_task.js polling #}
-        {# Initial state if Flask passes data (optional) #}
-        {% if active_employees_for_sidebar and active_employees_for_sidebar|length > 0 %}
-            {% for emp in active_employees_for_sidebar %}
-                <li>
-                    <span class="online-dot"></span>
-                    <a href="{{ url_for('users.edit_user', employee_doc_id=emp._id) }}" 
-                       title="{{ emp.display_name }} ({{ emp.employee_id }})">
-                       {{ emp.display_name | truncate(18) }}
-                    </a>
-                </li>
-            {% endfor %}
-        {% else %}
-            <li class="text-muted small" style="padding-left:0;">Loading active users...</li>
-        {% endif %}
-    </ul>
-    {% if pending_rename_count and pending_rename_count > 0 %}
-    <div class="sidebar-notification pending-notification"> {# Added class for styling #}
-        <a href="{{ url_for('users.list_users', q='pending_rename', search_by_status='true') }}" {# Example: Link to pre-filtered user list #}
-           title="{{ pending_rename_count }} user(s) need configuration">
-            <i class="fas fa-exclamation-triangle"></i> 
-            <span>{{ pending_rename_count }} User(s) Pending</span>
-        </a>
+
+{# Collapsible Employees Online Section - Uses Bootstrap Collapse #}
+<div class="sidebar-section collapsible-section">
+    <a href="#employeesOnlineCollapse" class="sidebar-section-toggle collapsed" {# Add 'collapsed' class by default #}
+       data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="employeesOnlineCollapse">
+        <span>EMPLOYEES ONLINE</span>
+        <span class="online-count" id="sidebarOnlineCount">{{ employees_online_count | default('0') }}</span>
+        <i class="fas fa-chevron-down collapse-icon ms-auto"></i> {# ms-auto pushes chevron to right if text is short #}
+    </a>
+    <div class="collapse" id="employeesOnlineCollapse"> {# Bootstrap 'collapse' class #}
+        <ul id="sidebarEmployeeList" class="list-unstyled ps-3">
+            {% if active_employees_for_sidebar and active_employees_for_sidebar|length > 0 %}
+                {% for emp in active_employees_for_sidebar %}
+                    <li>
+                        <span class="online-dot"></span>
+                        <a href="{{ url_for('users.edit_user', employee_doc_id=emp._id) }}" 
+                           title="{{ emp.display_name }} ({{ emp.employee_id }})">
+                           {{ emp.display_name | truncate(18) }}
+                        </a>
+                    </li>
+                {% endfor %}
+            {% else %}
+                <li class="text-muted small" style="padding-left:0;">Loading...</li>
+            {% endif %}
+        </ul>
     </div>
-    {% endif %}
+</div>
+
+
+{% if pending_rename_count and pending_rename_count > 0 %}
+<div class="sidebar-notification pending-notification">
+    <a href="{{ url_for('users.list_users', q='pending_rename') }}" {# Example: filter by status #}
+       title="{{ pending_rename_count }} user(s) need configuration">
+        <i class="fas fa-exclamation-triangle"></i> 
+        <span>{{ pending_rename_count }} User(s) Pending</span>
+    </a>
+</div>
+{% endif %}
+
+<div class="sidebar-footer mt-auto"> 
+    {# Optional footer content #}
 </div>

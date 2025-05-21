@@ -1,48 +1,60 @@
 {% extends "layout.html" %}
-{% block title %}Settings - TekPossible Monitor{% endblock %}
+{% block title %}Application Settings - TekPossible Monitor{% endblock %}
 
 {% block content %}
-<div id="settings-page" class="page"> {# Removed 'active' for Flask direct rendering #}
+<div id="settings-page" class="page">
     <div class="page-header">
         <h1 class="page-title">Application Settings</h1>
     </div>
-    <div class="card settings-form-container">
-        <h3 class="card-title">Change Admin Password</h3>
-        <p style="font-size:0.9em; color: #555; margin-bottom:15px;">Update your administrator account password.</p>
-        
-        <form method="POST" action="{{ url_for('settings.change_password') }}">
-            {# If using Flask-WTF, add {{ form.csrf_token }} #}
-            <div class="form-group">
-                <label for="currentPassword">Current Password</label>
-                <input type="password" id="currentPassword" name="current_password" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="newPassword">New Password (min 8 characters)</label>
-                <input type="password" id="newPassword" name="new_password" class="form-control" required minlength="8">
-            </div>
-            <div class="form-group">
-                <label for="confirmNewPassword">Confirm New Password</label>
-                <input type="password" id="confirmNewPassword" name="confirm_password" class="form-control" required minlength="8">
-            </div>
-            <div class="form-actions" style="border-top: none; padding-top: 10px;">
-                <button type="submit" class="btn btn-primary"><i class="fas fa-key"></i> Change Password</button>
-            </div>
-        </form>
-        
-        <hr class="my-4">
 
-        <h3 class="card-title mt-3">Agent Download</h3>
-        <p style="font-size:0.9em; color: #555; margin-bottom:15px;">Download the latest monitoring agent for Windows.</p>
-        <div class="form-actions" style="border-top: none; padding-top: 0;">
-            <a href="{{ url_for('api.download_agent_exe') }}" class="btn btn-success"><i class="fas fa-download"></i> Download Agent (.exe)</a>
+    <div class="row justify-content-center"> {# Center content on page #}
+        <div class="col-lg-7 col-md-9">
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-key me-2"></i>Change Admin Password</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Update your administrator account password. Choose a strong, unique password of at least 8 characters.</p>
+                    <form method="POST" action="{{ url_for('settings.change_password') }}">
+                        {# If using Flask-WTF, add form.csrf_token here #}
+                        <div class="form-group">
+                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <input type="password" id="currentPassword" name="current_password" class="form-control" required autocomplete="current-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword" class="form-label">New Password (min 8 characters)</label>
+                            <input type="password" id="newPassword" name="new_password" class="form-control" required minlength="8" autocomplete="new-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" id="confirmNewPassword" name="confirm_password" class="form-control" required minlength="8" autocomplete="new-password">
+                        </div>
+                        <div class="form-actions mt-4 pt-0 border-0 text-end"> {# Aligned button to the right #}
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Change Password</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Agent Management</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title mb-2">Agent Download</h6>
+                    <p class="text-muted small mb-3">Download the latest monitoring agent installer for Windows client machines.</p>
+                    <a href="{{ url_for('api.download_agent_exe') }}" class="btn btn-success">
+                        <i class="fas fa-download me-1"></i> Download Agent (.exe)
+                    </a>
+                    <hr class="my-4">
+                    <h6 class="card-title mb-2">Agent Settings</h6>
+                     <p class="text-muted small mb-3">View or modify agent behavior settings (e.g., screenshot interval, activity logging frequency). <br><em>(This functionality is not yet implemented.)</em></p>
+                     <button class="btn btn-outline-secondary" disabled><i class="fas fa-sliders-h me-1"></i> Configure Agent (Soon)</button>
+                </div>
+            </div>
+
         </div>
-        
-        {# Add more settings sections below as needed #}
-        <!-- 
-        <hr class="my-4">
-        <h3 class="card-title mt-3">Data Retention</h3>
-        <p style="font-size:0.9em; color: #555; margin-bottom:15px;">Configure data retention policies (Not Implemented).</p>
-        -->
     </div>
 </div>
 {% endblock %}
