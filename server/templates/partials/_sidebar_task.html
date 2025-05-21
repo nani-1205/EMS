@@ -5,28 +5,32 @@
             <a href="{{ url_for('dashboard.view_dashboard') }}" 
                class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" 
                title="Dashboard">
-                <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+                <i class="fas fa-tachometer-alt fa-fw"></i> {# Added fa-fw for fixed width #}
+                <span>Dashboard</span>
             </a>
         </li>
         <li>
             <a href="{{ url_for('users.list_users') }}" 
                class="nav-link {% if active_page == 'users' %}active{% endif %}" 
                title="Users & Teams">
-                <i class="fas fa-users"></i> <span>Users & Teams</span>
+                <i class="fas fa-users fa-fw"></i> {# Added fa-fw #}
+                <span>Users & Teams</span>
             </a>
         </li>
         <li>
             <a href="{{ url_for('reports.index') }}" 
                class="nav-link {% if active_page == 'reports' %}active{% endif %}" 
                title="Reports">
-                <i class="fas fa-chart-bar"></i> <span>Reports</span>
+                <i class="fas fa-chart-bar fa-fw"></i> {# Added fa-fw #}
+                <span>Reports</span>
             </a>
         </li>
         <li>
             <a href="{{ url_for('settings.index') }}" 
                class="nav-link {% if active_page == 'settings' %}active{% endif %}" 
                title="Settings">
-                <i class="fas fa-cog"></i> <span>Settings</span>
+                <i class="fas fa-cog fa-fw"></i> {# Added fa-fw #}
+                <span>Settings</span>
             </a>
         </li>
     </ul>
@@ -35,10 +39,13 @@
     <h3>
         <span>EMPLOYEES ONLINE</span> 
         <span class="online-count" id="sidebarOnlineCount">
-            {{ employees_online_count | default('0') }} {# Pass this from your routes, or JS will update #}
+            {# This count will be updated by script_task.js polling #}
+            {{ employees_online_count | default('0') }} 
         </span>
     </h3>
     <ul id="sidebarEmployeeList">
+        {# This list will be populated by script_task.js polling #}
+        {# Initial state if Flask passes data (optional) #}
         {% if active_employees_for_sidebar and active_employees_for_sidebar|length > 0 %}
             {% for emp in active_employees_for_sidebar %}
                 <li>
@@ -50,16 +57,15 @@
                 </li>
             {% endfor %}
         {% else %}
-            <li class="text-muted small" style="padding-left:0;">No employees recently active.</li>
+            <li class="text-muted small" style="padding-left:0;">Loading active users...</li>
         {% endif %}
-        {# JavaScript will also update this list via polling #}
     </ul>
     {% if pending_rename_count and pending_rename_count > 0 %}
-    <div style="padding-top: 10px; border-top: 1px solid #4a627a; margin-top:10px;">
-        <a href="{{ url_for('users.list_users', status_filter='pending_rename') }}" 
-           title="{{ pending_rename_count }} user(s) need configuration"
-           style="font-size: 0.85em; color: #f39c12; text-decoration: none; display:block; text-align:center;">
-            <i class="fas fa-exclamation-triangle"></i> {{ pending_rename_count }} User(s) Pending
+    <div class="sidebar-notification pending-notification"> {# Added class for styling #}
+        <a href="{{ url_for('users.list_users', q='pending_rename', search_by_status='true') }}" {# Example: Link to pre-filtered user list #}
+           title="{{ pending_rename_count }} user(s) need configuration">
+            <i class="fas fa-exclamation-triangle"></i> 
+            <span>{{ pending_rename_count }} User(s) Pending</span>
         </a>
     </div>
     {% endif %}
