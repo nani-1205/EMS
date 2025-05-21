@@ -1,19 +1,25 @@
 {% extends "layout.html" %}
-{% block title %}Server Error{% endblock %}
+{% block title %}Server Error - TekPossible Monitor{% endblock %}
 
 {% block content %}
-<div class="container text-center mt-5 pt-5">
-    <h1 class="display-1">500</h1>
-    <h2 class="mb-4">Oops! Something Went Wrong</h2>
-    <p class="lead mb-4">
-        We're sorry, but our server encountered an internal error and was unable to complete your request.
+<div class="page text-center" style="padding-top: 50px;">
+    <h1 class="page-title" style="font-size: 4em; margin-bottom: 0;">500</h1>
+    <h2 style="font-size: 1.5em; color: #555; margin-bottom: 20px;">Internal Server Error</h2>
+    <p class="lead mb-4" style="color: #777;">
+        We're sorry, but our server encountered an unexpected issue.
         {% if error_message %}
             <br>Details: {{ error_message }}
         {% endif %}
-        <br>Our team has been notified. Please try again later.
+        <br>Our technical team has been notified. Please try again later.
     </p>
+    {% if session.user_id %}
     <a href="{{ url_for('dashboard.view_dashboard') }}" class="btn btn-primary">
-        <i class="bi bi-house-door-fill me-2"></i>Go to Dashboard
+        <i class="fas fa-home"></i> Go to Dashboard
     </a>
+    {% else %}
+    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+        <i class="fas fa-sign-in-alt"></i> Go to Login
+    </a>
+    {% endif %}
 </div>
 {% endblock %}

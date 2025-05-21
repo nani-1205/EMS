@@ -1,172 +1,101 @@
 {% extends "layout.html" %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard - TekPossible Monitor{% endblock %}
 
 {% block head_extra %}
-{{ super() }}
-<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/>
-<script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js" defer></script>
+    {{ super() }}
+    {# Chart.js and Litepicker are assumed to be in layout.html or loaded globally #}
+    {# If not, add their CDN links here #}
+    {# <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script> #}
+    {# <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/> #}
+    {# <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js" defer></script> #}
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Dashboard</h1>
-    <div class="btn-toolbar mb-2 mb-md-0 align-items-center"> {# Use align-items-center for vertical alignment #}
-        <div class="btn-group me-2">
-            <a href="{{ url_for('dashboard.view_dashboard', period='day', employee_id=selected_employee_id if selected_employee_id else 'all') }}"
-               class="btn btn-sm btn-outline-secondary {% if selected_period == 'day' %}active{% endif %}">Day</a>
-            <a href="{{ url_for('dashboard.view_dashboard', period='week', employee_id=selected_employee_id if selected_employee_id else 'all') }}"
-               class="btn btn-sm btn-outline-secondary {% if selected_period == 'week' %}active{% endif %}">Week</a>
-            <a href="{{ url_for('dashboard.view_dashboard', period='month', employee_id=selected_employee_id if selected_employee_id else 'all') }}"
-               class="btn btn-sm btn-outline-secondary {% if selected_period == 'month' %}active{% endif %}">Month</a>
-            <button type="button" class="btn btn-sm btn-outline-secondary {% if selected_period == 'custom' %}active{% endif %}" id="dateRangePickerTrigger">Date Range</button>
-        </div>
-        <div class="btn-group me-3"> {# Employee Selector #}
-            <select class="form-select form-select-sm" id="employeeFilterSelect" style="width: auto;" title="Filter dashboard by employee">
-                <option value="all" {% if not selected_employee_id or selected_employee_id == 'all' %}selected{% endif %}>All Employees</option>
-                {% for emp in filter_employees_list %}
-                    <option value="{{ emp.employee_id }}" {% if emp.employee_id == selected_employee_id %}selected{% endif %}>
-                        {{ emp.display_name | default(emp.employee_id, true) }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-         <span class="text-muted small" title="Currently selected date range"> {# Removed ms-2, align-self-center as btn-toolbar handles alignment #}
-             Showing: {{ start_date_str }} to {{ end_date_str }}
-         </span>
+<div id="dashboard-page" class="page"> {# `active` class is not needed if Flask renders this page directly #}
+    <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+        {# Any buttons or actions for the dashboard header can go here #}
     </div>
-</div>
 
-<!-- Top Stats Row -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card text-center h-100"> {# Added h-100 for consistent height #}
-            <div class="card-body d-flex flex-column"> {# Added d-flex for centering #}
-                <h5 class="card-title text-muted">Average Start Time</h5>
-                <p class="card-text fs-4 mt-auto">{{ avg_start_time if avg_start_time != 'N/A' else '--:--' }}</p>
-            </div>
+    <div class="dashboard-filters">
+        <div class="btn-group">
+            <a href="{{ url_for('dashboard.view_dashboard', period='day', employee_id=selected_employee_id if selected_employee_id else 'all') }}" class="btn btn-secondary btn-sm {% if selected_period == 'day' %}active{% endif %}">Day</a>
+            <a href="{{ url_for('dashboard.view_dashboard', period='week', employee_id=selected_employee_id if selected_employee_id else 'all') }}" class="btn btn-secondary btn-sm {% if selected_period == 'week' %}active{% endif %}">Week</a>
+            <a href="{{ url_for('dashboard.view_dashboard', period='month', employee_id=selected_employee_id if selected_employee_id else 'all') }}" class="btn btn-secondary btn-sm {% if selected_period == 'month' %}active{% endif %}">Month</a>
+            <button type="button" class="btn btn-secondary btn-sm {% if selected_period == 'custom' %}active{% endif %}" id="dateRangePickerTriggerDashboard">Date Range</button>
         </div>
+        <select class="form-control form-select-sm" id="employeeFilterSelectDashboard" name="employee_id" title="Filter dashboard by employee">
+            <option value="all" {% if not selected_employee_id or selected_employee_id == 'all' %}selected{% endif %}>All Employees</option>
+            {% for emp in filter_employees_list %}
+                <option value="{{ emp.employee_id }}" {% if emp.employee_id == selected_employee_id %}selected{% endif %}>
+                    {{ emp.display_name | default(emp.employee_id, true) }}
+                </option>
+            {% endfor %}
+        </select>
+        <span class="date-info">Showing: {{ start_date_str }} to {{ end_date_str }}</span>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center h-100">
-            <div class="card-body d-flex flex-column">
-                <h5 class="card-title text-muted">{{ team_working_time_label | default('Working Time', true) }}</h5>
-                <p class="card-text fs-4 mt-auto">{{ team_working_time | default('--:--:--', true) }}</p>
-            </div>
-        </div>
+
+    <div class="stats-grid">
+        <div class="stat-card"><h4>Average Start Time</h4><p>{{ avg_start_time if avg_start_time != 'N/A' else '--:--' }}</p></div>
+        <div class="stat-card"><h4>{{ team_working_time_label | default('Working Time') }}</h4><p>{{ team_working_time | default('--:--:--', true) }}</p></div>
+        <div class="stat-card"><h4>Latest Activity Seen</h4><p>{{ avg_last_seen if avg_last_seen != 'N/A' else '--:--' }}</p></div>
+        <div class="stat-card"><h4>Team Members</h4><p>{{ team_members_count | default('0', true) }}</p></div>
+        <div class="stat-card"><h4>Tracked Members</h4><p>{{ tracked_members_count | default('0', true) }}</p></div>
     </div>
-    <div class="col-md-3">
-         <div class="card text-center h-100">
-             <div class="card-body d-flex flex-column">
-                 <h5 class="card-title text-muted">Latest Activity Seen</h5>
-                 <p class="card-text fs-4 mt-auto">{{ avg_last_seen if avg_last_seen != 'N/A' else '--:--' }}</p>
-             </div>
-         </div>
-     </div>
-     <div class="col-md-3">
-         <div class="row h-100">
-             <div class="col-6 d-flex">
-                 <div class="card text-center w-100 mb-2 mb-md-0"> {# w-100 and adjusted margin #}
-                      <div class="card-body px-1 py-2 d-flex flex-column">
-                           <h6 class="card-title text-muted small">Team Members</h6>
-                           <p class="card-text fs-5 mt-auto">{{ team_members_count | default('0', true) }}</p>
-                       </div>
-                 </div>
-             </div>
-              <div class="col-6 d-flex">
-                 <div class="card text-center w-100">
-                      <div class="card-body px-1 py-2 d-flex flex-column">
-                           <h6 class="card-title text-muted small">Tracked Members</h6>
-                           <p class="card-text fs-5 mt-auto">{{ tracked_members_count | default('0', true) }}</p>
-                       </div>
-                 </div>
-             </div>
-         </div>
-     </div>
-</div>
 
-
-<!-- Charts and Tables Row -->
-<div class="row">
-    <div class="col-md-6 mb-4"> {# Added mb-4 for spacing on small screens #}
-        <div class="card h-100">
-            <div class="card-header">
-                Top 5 websites & applications
-                 <i class="bi bi-info-circle float-end" title="Total active time during selected period for {{ selected_employee_id or 'all employees' }}"></i>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <canvas id="topSitesChart" width="200" height="200"></canvas>
-                    </div>
-                    <div class="col-md-6">
-                        <ul class="list-group list-group-flush">
+    <div class="dashboard-row">
+        <div class="dashboard-col-left card chart-container">
+            <h3 class="card-title">Top 5 websites & applications <i class="fas fa-info-circle info-icon" title="Total active time during selected period for {{ selected_employee_id or 'all employees' }}"></i></h3>
+            <div style="display: flex; align-items: center; min-height: 180px;">
+                 <canvas id="topSitesChart" style="max-width: 160px; max-height: 160px; margin: 0 auto 15px auto; display: block;"></canvas> {# Centered canvas #}
+                <div class="chart-legend" style="flex-grow: 1; margin-left: 20px;">
+                    <ul id="topSitesLegend">
+                        {% if top_websites %}
                             {% for site in top_websites %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                                <span title="{{ site.name }}">{{ site.name | truncate(25) }}</span>
-                                <span class="badge bg-primary rounded-pill">{{ "{:0>2}:{:0>2}".format(site.duration // 60 % 60, site.duration % 60) if site.duration < 3600 else "{:0>2}:{:0>2}:{:0>2}".format(site.duration // 3600, site.duration // 60 % 60, site.duration % 60) }}</span>
+                            <li>
+                                <span><span class="legend-color" style="background-color: #ccc;"></span>{{ site.name | truncate(25) }}</span> 
+                                <span>{{ "{:0>2}:{:0>2}".format(site.duration // 60 % 60, site.duration % 60) if site.duration < 3600 else "{:0>2}:{:0>2}:{:0>2}".format(site.duration // 3600, site.duration // 60 % 60, site.duration % 60) }}</span>
                             </li>
-                            {% else %}
-                            <li class="list-group-item text-muted">No activity data found for this period.</li>
                             {% endfor %}
-                        </ul>
-                    </div>
+                        {% else %}
+                            <li class="text-muted small">No website/app data for this selection.</li>
+                        {% endif %}
+                    </ul>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-             <div class="card-header">
-                Work Hours (Total)
-                <button class="btn btn-sm btn-outline-secondary float-end" title="Download CSV (Not Implemented)" disabled><i class="bi bi-download"></i></button>
-            </div>
-            <div class="card-body p-0">
-                 <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th scope="col">Name</th>
-                                <th scope="col" title="Unique days with activity in period">Man Days</th>
-                                <th scope="col" title="Total work hours in period (HH:MM:SS)">Work Hours (Total)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                             {% for item in work_hours_data %}
-                             <tr>
-                                 <td title="{{ item.name }}">{{ item.name | truncate(25) }}</td>
-                                 <td>{{ item.man_days | default('0', true) }}</td>
-                                 <td>{{ item.work_hours | default('--:--:--', true) }}</td>
-                             </tr>
-                             {% else %}
-                             <tr>
-                                <td colspan="3" class="text-center text-muted">No work hour data found for this period.</td>
-                             </tr>
-                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+        <div class="dashboard-col-right card work-hours-table">
+            <h3 class="card-title">Work Hours (Total) <a href="#" class="table-header-icon" title="Download CSV (Not Implemented)" onclick="event.preventDefault(); alert('Download CSV feature not implemented yet.');"><i class="fas fa-download"></i></a></h3>
+            <div class="table-container" style="padding:0; box-shadow: none; border:none;">
+            <table>
+                <thead><tr><th>Name</th><th>Man Days</th><th>Work Hours (Total)</th></tr></thead>
+                <tbody>
+                    {% if work_hours_data %}
+                        {% for item in work_hours_data %}
+                        <tr><td>{{ item.name | truncate(25) }}</td><td>{{ item.man_days | default('0', true) }}</td><td>{{ item.work_hours | default('--:--:--', true) }}</td></tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="3" class="text-center text-muted" style="padding:20px;">No work hour data found for this period.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
             </div>
         </div>
     </div>
 </div>
-
-<button class="btn btn-danger position-fixed bottom-0 end-0 m-3 rounded-pill" style="z-index: 1050;" onclick="alert('Help feature not implemented yet.');">
-    <i class="bi bi-question-circle-fill"></i> Help
-</button>
 {% endblock %}
 
 {% block scripts_extra %}
-{{ super() }}
+{# Litepicker and Chart.js initialization scripts specific to this dashboard #}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const datePickerTrigger = document.getElementById('dateRangePickerTrigger');
-    if (datePickerTrigger) {
+    // Litepicker for Dashboard
+    const datePickerTriggerDashboard = document.getElementById('dateRangePickerTriggerDashboard');
+    if (datePickerTriggerDashboard) {
         const picker = new Litepicker({
-            element: datePickerTrigger,
+            element: datePickerTriggerDashboard,
             singleMode: false, numberOfMonths: 2, numberOfColumns: 2, format: 'YYYY-MM-DD',
-            buttonText: {apply: 'Apply', cancel: 'Cancel', previousMonth: '<i class="bi bi-chevron-left"></i>', nextMonth: '<i class="bi bi-chevron-right"></i>', reset: '<i class="bi bi-arrow-counterclockwise"></i>'},
+            buttonText: {apply: 'Apply', cancel: 'Cancel', previousMonth: '<i class="fas fa-chevron-left"></i>', nextMonth: '<i class="fas fa-chevron-right"></i>', reset: '<i class="fas fa-undo"></i>'},
             {% if selected_period == 'custom' and start_date_str and end_date_str %}
             startDate: '{{ start_date_str }}',
             endDate: '{{ end_date_str }}',
@@ -176,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (date1 && date2) {
                         const startDate = date1.format('YYYY-MM-DD');
                         const endDate = date2.format('YYYY-MM-DD');
-                        const currentEmployeeId = document.getElementById('employeeFilterSelect').value || 'all';
+                        const currentEmployeeId = document.getElementById('employeeFilterSelectDashboard').value || 'all';
                         window.location.href = `{{ url_for('dashboard.view_dashboard') }}?period=custom&start=${startDate}&end=${endDate}&employee_id=${currentEmployeeId}`;
                     }
                 });
@@ -184,12 +113,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    const employeeSelect = document.getElementById('employeeFilterSelect');
-    if (employeeSelect) {
-        employeeSelect.addEventListener('change', function() {
+    // Employee Filter Change Handler for Dashboard
+    const employeeSelectDashboard = document.getElementById('employeeFilterSelectDashboard');
+    if (employeeSelectDashboard) {
+        employeeSelectDashboard.addEventListener('change', function() {
             const selectedEmployee = this.value || 'all';
             const urlParams = new URLSearchParams(window.location.search);
-            const period = urlParams.get('period') || 'day';
+            const period = urlParams.get('period') || 'day'; // Default to day if not set
             const start = urlParams.get('start');
             const end = urlParams.get('end');
 
@@ -201,29 +131,91 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Chart.js for Top Sites
     const ctx = document.getElementById('topSitesChart');
+    const topSitesLegendElement = document.getElementById('topSitesLegend'); // Get the legend UL
     let topSitesData = [];
-    try {
-        const jsonData = '{{ top_websites | tojson | safe }}';
-        if (jsonData) { topSitesData = JSON.parse(jsonData); }
-    } catch (e) { console.error("Error parsing top_websites JSON:", e); }
 
-    const labels = topSitesData.map(item => item.name && item.name.length > 20 ? item.name.substring(0, 18) + '...' : (item.name || 'Unknown'));
-    const dataValues = topSitesData.map(item => item.duration || 0);
-    const backgroundColors = ['rgba(25, 135, 84, 0.8)','rgba(13, 110, 253, 0.8)','rgba(108, 117, 125, 0.8)','rgba(255, 193, 7, 0.8)','rgba(220, 53, 69, 0.8)'];
+    try {
+        const jsonData = {{ top_websites | tojson | safe }}; 
+        if (jsonData && Array.isArray(jsonData)) { topSitesData = jsonData; }
+    } catch (e) { console.error("Error processing top_websites JSON:", e); }
+
+    const chartLabels = topSitesData.map(item => item.name && item.name.length > 20 ? item.name.substring(0, 18) + '...' : (item.name || 'Unknown'));
+    const chartDataValues = topSitesData.map(item => item.duration || 0);
+    const chartBackgroundColors = ['#4CAF50', '#2196F3', '#FFC107', '#E91E63', '#9c27b0', '#00bcd4', '#ff9800']; 
 
     if (ctx && topSitesData && topSitesData.length > 0) {
       if (window.topSitesChartInstance) { window.topSitesChartInstance.destroy(); }
       window.topSitesChartInstance = new Chart(ctx, {
         type: 'doughnut',
-        data: { labels: labels, datasets: [{ label: 'Time Spent (seconds)', data: dataValues, backgroundColor: backgroundColors.slice(0, dataValues.length), hoverOffset: 4 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c){let l=c.label||'',v=c.raw||0,s=parseInt(v),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60,t='';if(h>0)t+=`${h}h `;if(m>0||h>0)t+=`${m}m `;t+=`${sec}s`;return`${l}: ${t.trim()}`;}}}}}
+        data: { 
+            labels: chartLabels, 
+            datasets: [{ 
+                label: 'Time Spent', 
+                data: chartDataValues, 
+                backgroundColor: chartBackgroundColors.slice(0, chartDataValues.length), 
+                hoverOffset: 4,
+                borderWidth: 1 
+            }] 
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            cutout: '65%', // Donut hole size
+            plugins: { 
+                legend: { display: false }, // Using custom legend
+                tooltip: { 
+                    callbacks: { 
+                        label: function(c){
+                            let l=c.label||'';
+                            let v=c.raw||0;
+                            let s=parseInt(v);
+                            let h=Math.floor(s/3600);
+                            let m=Math.floor((s%3600)/60);
+                            let sec=s%60;
+                            let t='';
+                            if(h>0)t+=`${h}h `;
+                            if(m>0||h>0)t+=`${m}m `;
+                            t+=`${sec}s`;
+                            return`${l}: ${t.trim()}`;
+                        }
+                    }
+                }
+            }
+        }
       });
-    } else if (ctx) {
+      
+      // Populate custom legend if it was not pre-rendered by Jinja
+      if(topSitesLegendElement && topSitesLegendElement.children.length === 0 || (topSitesLegendElement.children.length === 1 && topSitesLegendElement.firstElementChild.classList.contains('text-muted'))) {
+          topSitesLegendElement.innerHTML = ''; // Clear "No data" message if present
+          topSitesData.forEach((site, index) => {
+              const color = chartBackgroundColors[index % chartBackgroundColors.length];
+              const duration = site.duration || 0;
+              const hours = Math.floor(duration / 3600);
+              const minutes = Math.floor((duration % 3600) / 60);
+              const seconds = duration % 60;
+              let formattedTime = '';
+              if (hours > 0) formattedTime += `${String(hours).padStart(2, '0')}:`;
+              formattedTime += `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+              
+              topSitesLegendElement.innerHTML += `
+                <li>
+                    <span><span class="legend-color" style="background-color: ${color};"></span>${site.name ? String(site.name).substring(0,25) : 'Unknown'}</span> 
+                    <span>${formattedTime}</span>
+                </li>`;
+          });
+           if(topSitesData.length === 0 && topSitesLegendElement) {
+                topSitesLegendElement.innerHTML = '<li class="text-muted small">No website/app data for this selection.</li>';
+           }
+      }
+
+    } else if (ctx) { // No data to display
         const context = ctx.getContext('2d');
-        context.clearRect(0, 0, ctx.width, ctx.height);
+        context.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         context.textAlign = 'center'; context.textBaseline = 'middle'; context.fillStyle = '#6c757d'; context.font = "14px sans-serif";
-        context.fillText("No website/app data for this selection", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        context.fillText("No data for chart", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        if(topSitesLegendElement) topSitesLegendElement.innerHTML = '<li class="text-muted small">No website/app data for chart.</li>';
     }
 });
 </script>

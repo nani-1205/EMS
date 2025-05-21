@@ -1,15 +1,21 @@
 {% extends "layout.html" %}
-{% block title %}Page Not Found{% endblock %}
+{% block title %}Page Not Found - TekPossible Monitor{% endblock %}
 
 {% block content %}
-<div class="container text-center mt-5 pt-5">
-    <h1 class="display-1">404</h1>
-    <h2 class="mb-4">Oops! Page Not Found</h2>
-    <p class="lead mb-4">
-        Sorry, the page you are looking for does not exist. It might have been moved or deleted.
+<div class="page text-center" style="padding-top: 50px;"> {# Simplified to just be a page div #}
+    <h1 class="page-title" style="font-size: 4em; margin-bottom: 0;">404</h1>
+    <h2 style="font-size: 1.5em; color: #555; margin-bottom: 20px;">Page Not Found</h2>
+    <p class="lead mb-4" style="color: #777;">
+        Sorry, the page you are looking for does not exist or might have been moved.
     </p>
+    {% if session.user_id %}
     <a href="{{ url_for('dashboard.view_dashboard') }}" class="btn btn-primary">
-        <i class="bi bi-house-door-fill me-2"></i>Go to Dashboard
+        <i class="fas fa-home"></i> Go to Dashboard
     </a>
+    {% else %}
+    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+        <i class="fas fa-sign-in-alt"></i> Go to Login
+    </a>
+    {% endif %}
 </div>
 {% endblock %}

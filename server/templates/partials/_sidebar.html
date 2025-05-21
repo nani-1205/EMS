@@ -1,125 +1,66 @@
-<!-- /root/EMS/server/templates/partials/_sidebar.html -->
-<div class="position-sticky pt-5"> <!-- Adjust pt (padding-top) to match navbar height -->
-    <ul class="nav flex-column">
-        <li class="nav-item">
-            <a class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" aria-current="page" href="{{ url_for('dashboard.view_dashboard') }}">
-                <i class="bi bi-speedometer2 me-2"></i> Dashboard
-                {% if pending_rename_count and pending_rename_count > 0 %}
-                 <span class="badge bg-warning text-dark ms-1 float-end" title="{{ pending_rename_count }} users need configuration">{{ pending_rename_count }} !</span>
-                {% endif %}
+<!-- server/templates/partials/_sidebar_task.html -->
+<nav class="sidebar-nav">
+    <ul>
+        <li>
+            <a href="{{ url_for('dashboard.view_dashboard') }}" 
+               class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" 
+               title="Dashboard">
+                <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
             </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link {% if active_page == 'users' %}active{% endif %}" href="{{ url_for('users.list_users') }}">
-                <i class="bi bi-people me-2"></i> Users & Teams
-                 {% if pending_rename_count and pending_rename_count > 0 and active_page != 'dashboard' %} {# Avoid double notification if already on dashboard #}
-                 <span class="badge bg-warning text-dark ms-1 float-end" title="{{ pending_rename_count }} users need configuration">{{ pending_rename_count }} !</span>
-                {% endif %}
+        <li>
+            <a href="{{ url_for('users.list_users') }}" 
+               class="nav-link {% if active_page == 'users' %}active{% endif %}" 
+               title="Users & Teams">
+                <i class="fas fa-users"></i> <span>Users & Teams</span>
             </a>
         </li>
-        <li class="nav-item">
-            <!-- Updated href to point to reports.index -->
-            <a class="nav-link {% if active_page == 'reports' %}active{% endif %}" href="{{ url_for('reports.index') }}">
-                <i class="bi bi-file-earmark-bar-graph me-2"></i> Reports
+        <li>
+            <a href="{{ url_for('reports.index') }}" 
+               class="nav-link {% if active_page == 'reports' %}active{% endif %}" 
+               title="Reports">
+                <i class="fas fa-chart-bar"></i> <span>Reports</span>
             </a>
         </li>
-         <li class="nav-item">
-            <!-- Updated href to point to settings.index -->
-            <a class="nav-link {% if active_page == 'settings' %}active{% endif %}" href="{{ url_for('settings.index') }}">
-                <i class="bi bi-gear me-2"></i> Settings
+        <li>
+            <a href="{{ url_for('settings.index') }}" 
+               class="nav-link {% if active_page == 'settings' %}active{% endif %}" 
+               title="Settings">
+                <i class="fas fa-cog"></i> <span>Settings</span>
             </a>
         </li>
     </ul>
-
-    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase">
-        <span>Employees Online</span>
-        <span id="activeEmployeeCount" class="badge bg-success rounded-pill">0</span>
-    </h6>
-    <!-- This UL will be populated by JavaScript polling (JS is in this file for now) -->
-    <ul class="nav flex-column mb-2" id="realtimeEmployeeList">
-         <li class="nav-item ps-4 text-muted">Loading...</li>
-     </ul>
+</nav>
+<div class="employees-online">
+    <h3>
+        <span>EMPLOYEES ONLINE</span> 
+        <span class="online-count" id="sidebarOnlineCount">
+            {{ employees_online_count | default('0') }} {# Pass this from your routes, or JS will update #}
+        </span>
+    </h3>
+    <ul id="sidebarEmployeeList">
+        {% if active_employees_for_sidebar and active_employees_for_sidebar|length > 0 %}
+            {% for emp in active_employees_for_sidebar %}
+                <li>
+                    <span class="online-dot"></span>
+                    <a href="{{ url_for('users.edit_user', employee_doc_id=emp._id) }}" 
+                       title="{{ emp.display_name }} ({{ emp.employee_id }})">
+                       {{ emp.display_name | truncate(18) }}
+                    </a>
+                </li>
+            {% endfor %}
+        {% else %}
+            <li class="text-muted small" style="padding-left:0;">No employees recently active.</li>
+        {% endif %}
+        {# JavaScript will also update this list via polling #}
+    </ul>
+    {% if pending_rename_count and pending_rename_count > 0 %}
+    <div style="padding-top: 10px; border-top: 1px solid #4a627a; margin-top:10px;">
+        <a href="{{ url_for('users.list_users', status_filter='pending_rename') }}" 
+           title="{{ pending_rename_count }} user(s) need configuration"
+           style="font-size: 0.85em; color: #f39c12; text-decoration: none; display:block; text-align:center;">
+            <i class="fas fa-exclamation-triangle"></i> {{ pending_rename_count }} User(s) Pending
+        </a>
+    </div>
+    {% endif %}
 </div>
-
-<!-- JavaScript for polling active employees -->
-<!-- This script should ideally be in a global JS file loaded by layout.html, -->
-<!-- but placed here for modularity of _sidebar.html if preferred. -->
-<!-- Ensure this runs after the DOM is loaded. -->
-<script>
-    function fetchActiveEmployeesSidebar() { // Renamed to avoid conflict if similar func elsewhere
-        // Check if the API endpoint URL can be generated (i.e., if Flask context is available)
-        // This check is more for direct template rendering without full Flask request context,
-        // which shouldn't happen for a sidebar included in a fully rendered page.
-        let apiUrl;
-        try {
-            apiUrl = "{{ url_for('api.get_active_employees') }}";
-        } catch (e) {
-            console.warn("Could not generate API URL for active employees in sidebar, possibly outside Flask request context.");
-            return; // Don't proceed if URL can't be formed
-        }
-
-        fetch(apiUrl)
-            .then(response => {
-                if (!response.ok) {
-                    console.error(`Error fetching active employees: ${response.status} ${response.statusText}`);
-                    // Optionally update UI to show an error, or just silently fail the poll
-                    return null; // Indicate failure
-                }
-                return response.json();
-            })
-            .then(data => {
-                const employeeListElement = document.getElementById('realtimeEmployeeList');
-                const employeeCountElement = document.getElementById('activeEmployeeCount');
-
-                if (!employeeListElement || !employeeCountElement) return; // Elements not found
-
-                if (data && Array.isArray(data)) { // Check if data is valid array
-                    employeeListElement.innerHTML = ''; // Clear existing list
-                    if (data.length > 0) {
-                        employeeCountElement.textContent = data.length;
-                        data.forEach(emp => {
-                            const listItem = document.createElement('li');
-                            listItem.classList.add('nav-item');
-                            // Construct URL for user edit page
-                            let userEditUrl = "#"; // Default fallback
-                            try {
-                                userEditUrl = "{{ url_for('users.edit_user', employee_doc_id='EMP_ID_PLACEHOLDER') }}".replace('EMP_ID_PLACEHOLDER', emp._id);
-                            } catch (e) { /* url_for might fail if not in full request context for some reason */ }
-
-                            listItem.innerHTML = `<a class="nav-link text-secondary ps-4" href="${userEditUrl}" title="${emp.display_name || 'N/A'} (ID: ${emp.employee_id || 'N/A'})">${(emp.display_name || 'Unnamed').length > 20 ? (emp.display_name || 'Unnamed').substring(0,18)+'...' : (emp.display_name || 'Unnamed')}</a>`;
-                            employeeListElement.appendChild(listItem);
-                        });
-                    } else {
-                        employeeCountElement.textContent = '0';
-                        employeeListElement.innerHTML = '<li class="nav-item ps-4 text-muted">No employees recently active.</li>';
-                    }
-                } else if (data === null) {
-                    // Error was handled in the first .then block, do nothing or show static error
-                } else {
-                    // Unexpected data format
-                    console.warn("Unexpected data format for active employees:", data);
-                    employeeCountElement.textContent = '0';
-                    employeeListElement.innerHTML = '<li class="nav-item ps-4 text-warning small">Error loading data.</li>';
-                }
-            })
-            .catch(error => {
-                console.error('Network or other error fetching active employees:', error);
-                const employeeListElement = document.getElementById('realtimeEmployeeList');
-                const employeeCountElement = document.getElementById('activeEmployeeCount');
-                if (employeeListElement) {
-                    // employeeListElement.innerHTML = '<li class="nav-item ps-4 text-danger small">Network error.</li>';
-                }
-                if (employeeCountElement) {
-                     employeeCountElement.textContent = '?';
-                }
-                // Silently fail after initial log for subsequent polls to avoid console spam
-            });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        if (document.getElementById('realtimeEmployeeList')) {
-            fetchActiveEmployeesSidebar(); // Initial call
-            setInterval(fetchActiveEmployeesSidebar, 30000); // Poll every 30 seconds
-        }
-    });
-</script>

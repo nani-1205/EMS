@@ -1,43 +1,48 @@
 {% extends "layout.html" %}
-{% block title %}Reports Center{% endblock %}
+{% block title %}Reports Center - TekPossible Monitor{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Reports Center</h1>
-</div>
+<div id="reports-center-page" class="page"> {# Removed 'active' for Flask direct rendering #}
+    <div class="page-header">
+        <h1 class="page-title">Reports Center</h1>
+    </div>
 
-<p class="lead">Select a report type to view detailed information.</p>
+    <p class="lead" style="margin-bottom: 25px; font-size: 1.05em; color: #555;">Select a report type to view detailed information and insights into employee activity.</p>
 
-<div class="row mt-4">
-    <div class="col-md-6 mb-3">
-        <div class="card h-100">
-            <div class="card-body d-flex flex-column">
-                <h5 class="card-title"><i class="bi bi-list-task me-2"></i>Activity Log Report</h5>
-                <p class="card-text">View detailed logs of application usage and window titles for selected employees over a specific period.</p>
-                <a href="{{ url_for('reports.activity_log_report') }}" class="btn btn-primary mt-auto">Go to Activity Log</a>
+    <div class="row report-cards-container"> {# Using Bootstrap row for layout if preferred over custom flex #}
+        <div class="col-md-6 mb-4">
+            <div class="card report-card h-100"> {# h-100 for equal height cards #}
+                <div class="card-body d-flex flex-column">
+                    <i class="fas fa-list-alt fa-2x mb-3"></i> {# Adjusted icon size and margin #}
+                    <h5 class="card-title">Activity Log Report</h5>
+                    <p class="card-text">View detailed logs of application usage and window titles for selected employees over a specific period.</p>
+                    <a href="{{ url_for('reports.activity_log_report') }}" class="btn btn-primary mt-auto">Go to Activity Log</a>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-6 mb-3">
-        <div class="card h-100">
-            <div class="card-body d-flex flex-column">
-                <h5 class="card-title"><i class="bi bi-images me-2"></i>Screenshot Report</h5>
-                <p class="card-text">Browse captured screenshots for selected employees within a specified date range.</p>
-                <a href="{{ url_for('reports.screenshot_report') }}" class="btn btn-primary mt-auto">Go to Screenshots</a>
+        <div class="col-md-6 mb-4">
+            <div class="card report-card h-100">
+                <div class="card-body d-flex flex-column">
+                    <i class="fas fa-camera fa-2x mb-3"></i>
+                    <h5 class="card-title">Screenshot Report</h5>
+                    <p class="card-text">Browse captured screenshots for selected employees within a specified date range.</p>
+                    <a href="{{ url_for('reports.screenshot_report') }}" class="btn btn-primary mt-auto">Go to Screenshots</a>
+                </div>
             </div>
         </div>
-    </div>
-    <!-- Add more cards here for future reports -->
-    <!--
-    <div class="col-md-6 mb-3">
-        <div class="card h-100">
-            <div class="card-body d-flex flex-column">
-                <h5 class="card-title"><i class="bi bi-bar-chart-line me-2"></i>Productivity Summary</h5>
-                <p class="card-text">View summary charts and statistics on employee productivity (Not Implemented).</p>
-                <a href="#" class="btn btn-secondary disabled mt-auto">View Summary (Soon)</a>
+        <!-- Add more report cards here as functionality is added -->
+        <!-- Example:
+        <div class="col-md-6 mb-4">
+            <div class="card report-card h-100">
+                 <div class="card-body d-flex flex-column">
+                    <i class="fas fa-chart-pie fa-2x mb-3"></i>
+                    <h5 class="card-title">Productivity Summary</h5>
+                    <p class="card-text">Analyze overall productivity trends and application usage patterns (Coming Soon).</p>
+                    <a href="#" class="btn btn-secondary disabled mt-auto">View Summary</a>
+                </div>
             </div>
         </div>
+        -->
     </div>
-    -->
 </div>
 {% endblock %}

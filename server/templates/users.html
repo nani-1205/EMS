@@ -1,115 +1,128 @@
 {% extends "layout.html" %}
-{% block title %}Users & Teams{% endblock %}
+{% block title %}Users & Teams - TekPossible Monitor{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Users & Teams</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <form method="GET" action="{{ url_for('users.list_users') }}" class="d-flex">
-            <input class="form-control form-control-sm me-2" type="search" placeholder="Search name, ID, status..."
-                   aria-label="Search" name="q" value="{{ search_query or '' }}">
-            <button class="btn btn-sm btn-outline-success" type="submit">Search</button>
-             {% if search_query %}
-                <a href="{{ url_for('users.list_users') }}" class="btn btn-sm btn-outline-secondary ms-2" title="Clear search">Clear</a>
-             {% endif %}
-        </form>
+<div id="users-page" class="page">
+    <div class="page-header">
+        <h1 class="page-title">Users & Teams</h1>
+        {# Optional: Add User Button
+        <a href="{{ url_for('users.add_user_route_if_any') }}" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Add User</a> 
+        #}
     </div>
-</div>
 
-<div class="table-responsive">
-    <table class="table table-striped table-hover">
-        <thead>
-            <tr>
-                <th scope="col">Display Name</th>
-                <th scope="col">Employee ID / Hostname</th>
-                <th scope="col">Status</th>
-                <th scope="col">First Seen</th>
-                <th scope="col">Last Seen</th>
-                <th scope="col">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for emp in employees %}
-            <tr>
-                <td>
-                    {{ emp.display_name }}
-                    {% if emp.status == 'pending_rename' %}
-                        <span class="badge bg-warning text-dark ms-1" title="Needs configuration">!</span>
-                    {% endif %}
-                </td>
-                <td>{{ emp.employee_id }}</td>
-                <td>
-                    {% if emp.status == 'pending_rename' %}
-                        <span class="badge bg-warning text-dark">{{ emp.status | replace('_', ' ') | title }}</span>
-                    {% elif emp.status == 'inactive' or emp.status == 'disabled' %}
-                         <span class="badge bg-secondary">{{ emp.status | title }}</span>
-                    {% else %}
-                        <span class="badge bg-success">{{ emp.status | title }}</span>
-                    {% endif %}
-                </td>
-                <td>{{ emp.first_seen.strftime('%Y-%m-%d %H:%M') if emp.first_seen else 'N/A' }}</td> {# Shorter time format #}
-                <td>{{ emp.last_seen.strftime('%Y-%m-%d %H:%M') if emp.last_seen else 'N/A' }}</td>  {# Shorter time format #}
-                <td>
-                    <a href="{{ url_for('users.edit_user', employee_doc_id=emp._id) }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-pencil-square"></i> Edit
-                    </a>
-                    <!-- Add Delete Button with confirmation later if needed -->
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="6" class="text-center text-muted">
-                    {% if search_query %}
-                        No employees found matching your search criteria.
-                    {% else %}
-                        No employees found.
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-{% if total_pages > 1 %}
-<nav aria-label="User pagination" class="mt-4">
-    <ul class="pagination justify-content-center flex-wrap"> {# Added flex-wrap for small screens #}
-        <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('users.list_users', page=current_page-1, q=search_query) if current_page > 1 else '#' }}">«</a>
-        </li>
-
-        {% set show_pages = 5 %} {# Number of page links to show around current page #}
-        {% set start_page = [1, current_page - (show_pages // 2)] | max %}
-        {% set end_page = [total_pages, start_page + show_pages - 1] | min %}
-        {% if end_page - start_page + 1 < show_pages %} {# Adjust start_page if end_page is too small #}
-            {% set start_page = [1, end_page - show_pages + 1] | max %}
+    <form method="GET" action="{{ url_for('users.list_users') }}" class="search-bar card" style="padding: 15px; margin-bottom:20px;">
+        <input class="form-control form-control-sm" type="search" placeholder="Search name, ID, status..."
+               aria-label="Search" name="q" value="{{ search_query or '' }}">
+        <button class="btn btn-primary btn-sm" type="submit"><i class="fas fa-search"></i> Search</button>
+        {% if search_query %}
+            <a href="{{ url_for('users.list_users') }}" class="btn btn-secondary btn-sm ms-2" title="Clear search" style="margin-left: 0.5rem;">Clear</a>
         {% endif %}
+    </form>
 
-        {% if start_page > 1 %}
-            <li class="page-item"><a class="page-link" href="{{ url_for('users.list_users', page=1, q=search_query) }}">1</a></li>
-            {% if start_page > 2 %}
-                <li class="page-item disabled"><span class="page-link">...</span></li>
-            {% endif %}
-        {% endif %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Display Name</th>
+                    <th>Employee ID / Hostname</th>
+                    <th>Status</th>
+                    <th>First Seen</th>
+                    <th>Last Seen</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if employees %}
+                    {% for emp in employees %}
+                    <tr>
+                        <td>
+                            {{ emp.display_name | default(emp.employee_id, true) }}
+                            {% if emp.status == 'pending_rename' %}
+                                <span class="badge bg-warning text-dark ms-1" title="Needs configuration" style="font-size:0.7em; padding: .2em .4em; vertical-align: middle;">!</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ emp.employee_id }}</td>
+                        <td>
+                            {% if emp.status == 'pending_rename' %}
+                                <span class="status-badge status-pending">{{ emp.status | replace('_', ' ') | title }}</span>
+                            {% elif emp.status == 'inactive' or emp.status == 'disabled' %}
+                                 <span class="status-badge status-inactive">{{ emp.status | title }}</span>
+                            {% elif emp.status == 'active' %}
+                                <span class="status-badge status-active">{{ emp.status | title }}</span>
+                            {% else %}
+                                 <span class="status-badge" style="background-color: #6c757d;">{{ emp.status | default('Unknown') | title }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ emp.first_seen.strftime('%Y-%m-%d %H:%M') if emp.first_seen else 'N/A' }}</td>
+                        <td>{{ emp.last_seen.strftime('%Y-%m-%d %H:%M') if emp.last_seen else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('users.edit_user', employee_doc_id=emp._id) }}" class="btn btn-edit btn-sm">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            {# Example: Delete button - requires backend route and JS confirmation #}
+                            {# <button class="btn btn-danger btn-sm ms-1" onclick="confirmDeleteUser('{{ emp._id }}', '{{ emp.display_name }}')"><i class="fas fa-trash"></i></button> #}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted" style="padding: 20px;">
+                            {% if search_query %}
+                                No employees found matching your search criteria.
+                            {% else %}
+                                No employees registered yet. Agents will appear here once they connect.
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
 
-        {% for p in range(start_page, end_page + 1) %}
-            <li class="page-item {% if p == current_page %}active{% endif %}">
-                <a class="page-link" href="{{ url_for('users.list_users', page=p, q=search_query) }}">{{ p }}</a>
+    {% if total_pages and total_pages > 1 %}
+    <nav aria-label="User pagination" class="mt-4">
+        <ul class="pagination"> {# Pagination styled by style.css #}
+            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('users.list_users', page=current_page-1, q=search_query) if current_page > 1 else '#' }}">«</a>
             </li>
-        {% endfor %}
-
-        {% if end_page < total_pages %}
-            {% if end_page < total_pages - 1 %}
-                <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% set show_pages = 5 %}
+            {% set start_page = [1, current_page - (show_pages // 2)] | max %}
+            {% set end_page = [total_pages, start_page + show_pages - 1] | min %}
+            {% if end_page - start_page + 1 < show_pages %}
+                {% set start_page = [1, end_page - show_pages + 1] | max %}
             {% endif %}
-            <li class="page-item"><a class="page-link" href="{{ url_for('users.list_users', page=total_pages, q=search_query) }}">{{ total_pages }}</a></li>
-        {% endif %}
+            {% if start_page > 1 %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('users.list_users', page=1, q=search_query) }}">1</a></li>
+                {% if start_page > 2 %}<li class="page-item disabled"><span class="page-link">...</span></li>{% endif %}
+            {% endif %}
+            {% for p in range(start_page, end_page + 1) %}
+                <li class="page-item {% if p == current_page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('users.list_users', page=p, q=search_query) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+            {% if end_page < total_pages %}
+                {% if end_page < total_pages - 1 %}<li class="page-item disabled"><span class="page-link">...</span></li>{% endif %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('users.list_users', page=total_pages, q=search_query) }}">{{ total_pages }}</a></li>
+            {% endif %}
+            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('users.list_users', page=current_page+1, q=search_query) if current_page < total_pages else '#' }}">»</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
 
-        <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('users.list_users', page=current_page+1, q=search_query) if current_page < total_pages else '#' }}">»</a>
-        </li>
-    </ul>
-</nav>
-{% endif %}
-
+{% block scripts_extra %}
+{# Add any page-specific JS for users.html here, e.g., for delete confirmation modal #}
+<script>
+    // function confirmDeleteUser(userId, userName) {
+    //     if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+    //         // Make a POST request to a delete route or submit a form
+    //         // Example: window.location.href = `/users/delete/${userId}`; // (if GET, not recommended for delete)
+    //         // Or submit a hidden form
+    //         console.log("Delete user:", userId);
+    //     }
+    // }
+</script>
 {% endblock %}

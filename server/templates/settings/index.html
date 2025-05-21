@@ -1,38 +1,48 @@
 {% extends "layout.html" %}
-{% block title %}Settings{% endblock %}
+{% block title %}Settings - TekPossible Monitor{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Application Settings</h1>
-</div>
-
-<div class="row">
-    <div class="col-md-8 col-lg-6">
-        <h4>Change Admin Password</h4>
-        <p class="text-muted">Update your administrator account password.</p>
+<div id="settings-page" class="page"> {# Removed 'active' for Flask direct rendering #}
+    <div class="page-header">
+        <h1 class="page-title">Application Settings</h1>
+    </div>
+    <div class="card settings-form-container">
+        <h3 class="card-title">Change Admin Password</h3>
+        <p style="font-size:0.9em; color: #555; margin-bottom:15px;">Update your administrator account password.</p>
+        
         <form method="POST" action="{{ url_for('settings.change_password') }}">
-            <div class="mb-3">
-                <label for="current_password" class="form-label">Current Password</label>
-                <input type="password" class="form-control" id="current_password" name="current_password" required>
+            {# If using Flask-WTF, add {{ form.csrf_token }} #}
+            <div class="form-group">
+                <label for="currentPassword">Current Password</label>
+                <input type="password" id="currentPassword" name="current_password" class="form-control" required>
             </div>
-            <div class="mb-3">
-                <label for="new_password" class="form-label">New Password</label>
-                <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+            <div class="form-group">
+                <label for="newPassword">New Password (min 8 characters)</label>
+                <input type="password" id="newPassword" name="new_password" class="form-control" required minlength="8">
             </div>
-            <div class="mb-3">
-                <label for="confirm_password" class="form-label">Confirm New Password</label>
-                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+            <div class="form-group">
+                <label for="confirmNewPassword">Confirm New Password</label>
+                <input type="password" id="confirmNewPassword" name="confirm_password" class="form-control" required minlength="8">
             </div>
-            <button type="submit" class="btn btn-primary">Change Password</button>
+            <div class="form-actions" style="border-top: none; padding-top: 10px;">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-key"></i> Change Password</button>
+            </div>
         </form>
+        
         <hr class="my-4">
-        <!-- Add other settings sections here -->
-        <!--
-        <h4>Agent Configuration</h4>
-        <p class="text-muted">Manage agent settings (Not Implemented)</p>
-        ...
+
+        <h3 class="card-title mt-3">Agent Download</h3>
+        <p style="font-size:0.9em; color: #555; margin-bottom:15px;">Download the latest monitoring agent for Windows.</p>
+        <div class="form-actions" style="border-top: none; padding-top: 0;">
+            <a href="{{ url_for('api.download_agent_exe') }}" class="btn btn-success"><i class="fas fa-download"></i> Download Agent (.exe)</a>
+        </div>
+        
+        {# Add more settings sections below as needed #}
+        <!-- 
+        <hr class="my-4">
+        <h3 class="card-title mt-3">Data Retention</h3>
+        <p style="font-size:0.9em; color: #555; margin-bottom:15px;">Configure data retention policies (Not Implemented).</p>
         -->
     </div>
 </div>
-
 {% endblock %}
