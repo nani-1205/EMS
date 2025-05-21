@@ -5,19 +5,31 @@
 <div id="users-page" class="page">
     <div class="page-header">
         <h1 class="page-title">Users & Teams</h1>
-        {# Optional: Add User Button
-        <a href="{{ url_for('users.add_user_route_if_any') }}" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Add User</a> 
+        {# Optional: Add User Button - Requires a route and template for adding users manually #}
+        {# 
+        <a href="{{ url_for('users.add_user_form_route') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-user-plus"></i> Add New User
+        </a> 
         #}
     </div>
 
-    <form method="GET" action="{{ url_for('users.list_users') }}" class="search-bar card" style="padding: 15px; margin-bottom:20px;">
-        <input class="form-control form-control-sm" type="search" placeholder="Search name, ID, status..."
-               aria-label="Search" name="q" value="{{ search_query or '' }}">
-        <button class="btn btn-primary btn-sm" type="submit"><i class="fas fa-search"></i> Search</button>
-        {% if search_query %}
-            <a href="{{ url_for('users.list_users') }}" class="btn btn-secondary btn-sm ms-2" title="Clear search" style="margin-left: 0.5rem;">Clear</a>
-        {% endif %}
-    </form>
+    <div class="card mb-4">
+        <div class="card-body p-3">
+            <form method="GET" action="{{ url_for('users.list_users') }}" class="search-bar mb-0"> {# Removed margin from search-bar itself #}
+                <input class="form-control form-control-sm" type="search" 
+                       placeholder="Search by name, ID, or status (e.g., active, pending_rename)..."
+                       aria-label="Search Users" name="q" value="{{ search_query or '' }}">
+                <button class="btn btn-primary btn-sm" type="submit" style="min-width: 100px;">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                {% if search_query or status_filter %} {# Show clear if any filter is active #}
+                    <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary btn-sm ms-2" title="Clear all filters" style="min-width: 80px;">
+                        Clear
+                    </a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
 
     <div class="table-container">
         <table>
@@ -28,17 +40,17 @@
                     <th>Status</th>
                     <th>First Seen</th>
                     <th>Last Seen</th>
-                    <th>Actions</th>
+                    <th class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% if employees %}
+                {% if employees and employees|length > 0 %}
                     {% for emp in employees %}
                     <tr>
                         <td>
                             {{ emp.display_name | default(emp.employee_id, true) }}
                             {% if emp.status == 'pending_rename' %}
-                                <span class="badge bg-warning text-dark ms-1" title="Needs configuration" style="font-size:0.7em; padding: .2em .4em; vertical-align: middle;">!</span>
+                                <span class="badge rounded-pill bg-warning text-dark ms-1" title="Needs configuration" style="font-size:0.65em; padding: .2em .4em; vertical-align: middle;">PENDING</span>
                             {% endif %}
                         </td>
                         <td>{{ emp.employee_id }}</td>
@@ -53,24 +65,30 @@
                                  <span class="status-badge" style="background-color: #6c757d;">{{ emp.status | default('Unknown') | title }}</span>
                             {% endif %}
                         </td>
-                        <td>{{ emp.first_seen.strftime('%Y-%m-%d %H:%M') if emp.first_seen else 'N/A' }}</td>
-                        <td>{{ emp.last_seen.strftime('%Y-%m-%d %H:%M') if emp.last_seen else 'N/A' }}</td>
-                        <td>
-                            <a href="{{ url_for('users.edit_user', employee_doc_id=emp._id) }}" class="btn btn-edit btn-sm">
+                        <td style="white-space: nowrap;">{{ emp.first_seen.strftime('%Y-%m-%d %H:%M') if emp.first_seen else 'N/A' }}</td>
+                        <td style="white-space: nowrap;">{{ emp.last_seen.strftime('%Y-%m-%d %H:%M') if emp.last_seen else 'N/A' }}</td>
+                        <td class="text-center" style="white-space: nowrap;">
+                            <a href="{{ url_for('users.edit_user', employee_doc_id=emp._id) }}" class="btn btn-edit btn-sm" title="Edit {{ emp.display_name }}">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
                             {# Example: Delete button - requires backend route and JS confirmation #}
-                            {# <button class="btn btn-danger btn-sm ms-1" onclick="confirmDeleteUser('{{ emp._id }}', '{{ emp.display_name }}')"><i class="fas fa-trash"></i></button> #}
+                            {# 
+                            <form method="POST" action="{{ url_for('users.delete_user_route', employee_doc_id=emp._id) }}" style="display:inline-block; margin-left: 5px;" onsubmit="return confirm('Are you sure you want to delete user {{ emp.display_name }}? This action cannot be undone.');">
+                                <button type="submit" class="btn btn-danger btn-sm" title="Delete {{ emp.display_name }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                            #}
                         </td>
                     </tr>
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="6" class="text-center text-muted" style="padding: 20px;">
-                            {% if search_query %}
+                        <td colspan="6" class="text-center text-muted" style="padding: 30px;">
+                            {% if search_query or status_filter %}
                                 No employees found matching your search criteria.
                             {% else %}
-                                No employees registered yet. Agents will appear here once they connect.
+                                No employees registered yet. Agents will appear here once they connect and send data.
                             {% endif %}
                         </td>
                     </tr>
@@ -81,31 +99,38 @@
 
     {% if total_pages and total_pages > 1 %}
     <nav aria-label="User pagination" class="mt-4">
-        <ul class="pagination"> {# Pagination styled by style.css #}
+        <ul class="pagination">
             <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('users.list_users', page=current_page-1, q=search_query) if current_page > 1 else '#' }}">«</a>
+                <a class="page-link" href="{{ url_for('users.list_users', page=current_page-1, q=search_query, status_filter=status_filter) if current_page > 1 else '#' }}">«</a>
             </li>
-            {% set show_pages = 5 %}
-            {% set start_page = [1, current_page - (show_pages // 2)] | max %}
-            {% set end_page = [total_pages, start_page + show_pages - 1] | min %}
-            {% if end_page - start_page + 1 < show_pages %}
-                {% set start_page = [1, end_page - show_pages + 1] | max %}
+            
+            {% set page_window = 2 %} {# Number of page links to show around current page #}
+            {% set start_page_num = [1, current_page - page_window] | max %}
+            {% set end_page_num = [total_pages, start_page_num + (page_window * 2)] | min %}
+            {# Adjust start_page_num if end_page_num is at the limit to show more leading pages #}
+            {% if end_page_num == total_pages and (end_page_num - start_page_num + 1) < (page_window * 2 + 1) %}
+                {% set start_page_num = [1, total_pages - (page_window * 2)] | max %}
             {% endif %}
-            {% if start_page > 1 %}
-                <li class="page-item"><a class="page-link" href="{{ url_for('users.list_users', page=1, q=search_query) }}">1</a></li>
-                {% if start_page > 2 %}<li class="page-item disabled"><span class="page-link">...</span></li>{% endif %}
+
+
+            {% if start_page_num > 1 %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('users.list_users', page=1, q=search_query, status_filter=status_filter) }}">1</a></li>
+                {% if start_page_num > 2 %}<li class="page-item disabled"><span class="page-link">...</span></li>{% endif %}
             {% endif %}
-            {% for p in range(start_page, end_page + 1) %}
+
+            {% for p in range(start_page_num, end_page_num + 1) %}
                 <li class="page-item {% if p == current_page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('users.list_users', page=p, q=search_query) }}">{{ p }}</a>
+                    <a class="page-link" href="{{ url_for('users.list_users', page=p, q=search_query, status_filter=status_filter) }}">{{ p }}</a>
                 </li>
             {% endfor %}
-            {% if end_page < total_pages %}
-                {% if end_page < total_pages - 1 %}<li class="page-item disabled"><span class="page-link">...</span></li>{% endif %}
-                <li class="page-item"><a class="page-link" href="{{ url_for('users.list_users', page=total_pages, q=search_query) }}">{{ total_pages }}</a></li>
+
+            {% if end_page_num < total_pages %}
+                {% if end_page_num < total_pages - 1 %}<li class="page-item disabled"><span class="page-link">...</span></li>{% endif %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('users.list_users', page=total_pages, q=search_query, status_filter=status_filter) }}">{{ total_pages }}</a></li>
             {% endif %}
+
             <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('users.list_users', page=current_page+1, q=search_query) if current_page < total_pages else '#' }}">»</a>
+                <a class="page-link" href="{{ url_for('users.list_users', page=current_page+1, q=search_query, status_filter=status_filter) if current_page < total_pages else '#' }}">»</a>
             </li>
         </ul>
     </nav>
@@ -114,15 +139,20 @@
 {% endblock %}
 
 {% block scripts_extra %}
-{# Add any page-specific JS for users.html here, e.g., for delete confirmation modal #}
+{# Add any page-specific JS for users.html here, e.g., for a more interactive delete confirmation #}
 <script>
+    // Example for a more advanced delete confirmation (requires a modal in layout or here)
     // function confirmDeleteUser(userId, userName) {
-    //     if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
-    //         // Make a POST request to a delete route or submit a form
-    //         // Example: window.location.href = `/users/delete/${userId}`; // (if GET, not recommended for delete)
-    //         // Or submit a hidden form
-    //         console.log("Delete user:", userId);
-    //     }
+    //     const deleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal')); // Assuming Bootstrap modal
+    //     const modalBody = document.getElementById('confirmDeleteModalBody');
+    //     const confirmDeleteBtn = document.getElementById('confirmDeleteButton');
+        
+    //     if(modalBody) modalBody.textContent = `Are you sure you want to delete user "${userName}"? This action cannot be undone.`;
+    //     if(confirmDeleteBtn) confirmDeleteBtn.onclick = function() {
+    //         // Submit a form or make an AJAX POST request to delete
+    //         document.getElementById(`deleteForm_${userId}`).submit(); 
+    //     };
+    //     if(deleteModal) deleteModal.show();
     // }
 </script>
 {% endblock %}
