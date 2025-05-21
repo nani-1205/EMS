@@ -1,172 +1,203 @@
-// server/static/js/script_task.js
-
 document.addEventListener('DOMContentLoaded', function() {
- const sidebarNavLinks = document.querySelectorAll('.sidebar-nav a.nav-link');
- const adminMenuButton = document.getElementById('adminMenuButton');
- const adminDropdown = document.getElementById('adminDropdown');
- const logoutButton = document.getElementById('logoutButton');
- const helpButton = document.getElementById('helpButton');
+    'use strict'; // Enforce stricter parsing and error handling
 
- const sidebarOnlineCount = document.getElementById('sidebarOnlineCount');
- const sidebarEmployeeList = document.getElementById('sidebarEmployeeList');
- const apiEndpointsDiv = document.getElementById('apiEndpoints'); // For API URLs
+    // --- DOM Element Selectors (cached for performance) ---
+    const sidebarNavLinks = document.querySelectorAll('.sidebar-nav a.nav-link');
+    const adminMenuButton = document.getElementById('adminMenuButton');
+    const adminDropdown = document.getElementById('adminDropdown');
+    const helpButton = document.getElementById('helpButton');
+    const sidebarOnlineCountEl = document.getElementById('sidebarOnlineCount');
+    const sidebarEmployeeListEl = document.getElementById('sidebarEmployeeList');
+    const apiEndpointsDiv = document.getElementById('apiEndpoints');
 
- // --- Active State for Sidebar Links based on current Flask route ---
- const currentPath = window.location.pathname;
- sidebarNavLinks.forEach(link => {
-     const linkHref = link.getAttribute('href');
-     // Check if current path starts with the link's href (for parent sections)
-     // or is an exact match.
-     if (linkHref && (currentPath === linkHref || (currentPath.startsWith(linkHref) && linkHref !== '/'))) {
-         link.classList.add('active');
+    // --- Configuration ---
+    const ACTIVE_EMPLOYEE_POLL_INTERVAL = 30000; // 30 seconds
 
-         // Special handling to keep main "Reports" or "Settings" active if on a sub-page
-         if (currentPath.startsWith("/reports/") && linkHref === "{{ url_for('reports.index') }}") { // Using Jinja as placeholder
-              link.classList.add('active');
-         } else if (currentPath.startsWith("/settings/") && linkHref === "{{ url_for('settings.index') }}") {
-              link.classList.add('active');
-         }
+    // --- Helper Functions ---
+    function getApiUrl(dataAttributeName) {
+        if (apiEndpointsDiv && apiEndpointsDiv.dataset[dataAttributeName]) {
+            return apiEndpointsDiv.dataset[dataAttributeName];
+        }
+        // console.warn(`API URL data attribute '${dataAttributeName}' not found on #apiEndpoints div.`);
+        return null;
+    }
 
-     } else {
-         link.classList.remove('active');
-     }
-     // Handle data-target for client-side view switching IF you re-implement it
-     // For now, we assume Flask serves each page.
-     // If link has data-route (from older task.html logic), prefer actual href for active state.
- });
- 
- // If on a specific report page, ensure the main "Reports" sidebar link is also active
- if (currentPath.startsWith("/reports/") && currentPath !== "{{ url_for('reports.index') }}") {
-     const mainReportsLink = document.querySelector('.sidebar-nav a[href="{{ url_for(\'reports.index\') }}"]');
-     if(mainReportsLink) mainReportsLink.classList.add('active');
- }
- // If on a specific settings sub-page (if any), ensure main "Settings" is active
- if (currentPath.startsWith("/settings/") && currentPath !== "{{ url_for('settings.index') }}") {
-     const mainSettingsLink = document.querySelector('.sidebar-nav a[href="{{ url_for(\'settings.index\') }}"]');
-     if(mainSettingsLink) mainSettingsLink.classList.add('active');
- }
+    // --- Sidebar Active State ---
+    function setActiveSidebarLink() {
+        if (!sidebarNavLinks.length) return;
+
+        const currentPath = window.location.pathname;
+        let SCRIPT_ROOT = "{{ request.script_root|tojson|safe }}"; // Get SCRIPT_ROOT if app is not at domain root
+        if (SCRIPT_ROOT === "null" || SCRIPT_ROOT === "\"\"") SCRIPT_ROOT = "";
 
 
- // --- Admin Dropdown ---
- if (adminMenuButton && adminDropdown) {
-     adminMenuButton.addEventListener('click', function(e) {
-         e.stopPropagation(); // Prevent click from immediately closing due to document listener
-         adminDropdown.style.display = adminDropdown.style.display === 'block' ? 'none' : 'block';
-     });
+        sidebarNavLinks.forEach(link => {
+            let linkHref = link.getAttribute('href');
+            // If href is absolute, make it relative for comparison
+            if (linkHref && linkHref.startsWith(window.location.origin)) {
+                linkHref = linkHref.substring(window.location.origin.length);
+            }
+            // Remove trailing slashes for consistent comparison
+            const normalizedCurrentPath = SCRIPT_ROOT + currentPath.replace(/\/$/, "");
+            const normalizedLinkHref = linkHref ? SCRIPT_ROOT + linkHref.replace(/\/$/, "") : null;
 
-     // Close dropdown if clicked outside
-     document.addEventListener('click', function(event) {
-         if (adminDropdown.style.display === 'block' && 
-             !adminMenuButton.contains(event.target) && 
-             !adminDropdown.contains(event.target)) {
-             adminDropdown.style.display = 'none';
-         }
-     });
-     
-     // Handle clicks on dropdown items that are for client-side page switching
-     // (This is from task.html's original SPA logic)
-     adminDropdown.querySelectorAll('a.nav-link[data-target]').forEach(link => {
-         link.addEventListener('click', function(e) {
-             // For a Flask app, these should ideally be server-side routes
-             // If you keep client-side switching, this code would stay.
-             // For now, server-side navigation via href is preferred.
-             if(this.dataset.route) {
-                 // Let the href handle navigation
-             } else {
-                 e.preventDefault(); // Prevent if it's purely client-side target
-                 // showPage(this.dataset.target); // You'd need to re-implement showPage
-             }
-             adminDropdown.style.display = 'none';
-         });
-     });
- }
+            if (normalizedLinkHref && normalizedCurrentPath === normalizedLinkHref) {
+                link.classList.add('active');
+            } else if (normalizedLinkHref && normalizedLinkHref !== SCRIPT_ROOT + "/" && normalizedCurrentPath.startsWith(normalizedLinkHref)) {
+                // Handle parent path activation (e.g., /reports should be active if on /reports/activity_log)
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+    }
 
- // --- Logout (href in layout.html already points to Flask's /auth/logout) ---
- if (logoutButton) {
-     // No specific JS needed if it's just a link.
- }
-         
- // --- Help Button ---
- if (helpButton) {
-     helpButton.addEventListener('click', function() {
-         alert('Help feature is currently under development.'); // Placeholder
-     });
- }
+    // --- Admin Dropdown Menu ---
+    function initializeAdminDropdown() {
+        if (!adminMenuButton || !adminDropdown) return;
 
- // --- EMPLOYEES ONLINE POLLING ---
- function fetchActiveEmployeesSidebar() {
-     if (!sidebarEmployeeList || !sidebarOnlineCount || !apiEndpointsDiv) return;
-     
-     const activeEmployeesUrl = apiEndpointsDiv.dataset.activeEmployeesUrl;
-     const userEditUrlBase = apiEndpointsDiv.dataset.userEditUrlBase;
+        adminMenuButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // Toggle using Bootstrap's API if available, or manual toggle
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                const dropdownInstance = bootstrap.Dropdown.getInstance(adminMenuButton) || new bootstrap.Dropdown(adminMenuButton);
+                dropdownInstance.toggle();
+            } else { // Manual toggle as fallback
+                adminDropdown.style.display = adminDropdown.style.display === 'block' ? 'none' : 'block';
+            }
+        });
 
-     if (!activeEmployeesUrl || !userEditUrlBase) {
-         // console.warn("API URLs for sidebar not found in data attributes.");
-         // To avoid console spam on pages where it might not be critical
-         if (sidebarEmployeeList.textContent.includes("Loading...")) {
-              sidebarEmployeeList.innerHTML = '<li class="text-muted small" style="padding-left:0;">Could not load.</li>';
-              sidebarOnlineCount.textContent = '-';
-         }
-         return;
-     }
+        // Global click listener to close dropdown
+        document.addEventListener('click', function(event) {
+            if (adminDropdown.style.display === 'block' &&
+                !adminMenuButton.contains(event.target) &&
+                !adminDropdown.contains(event.target)) {
+                if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                     const dropdownInstance = bootstrap.Dropdown.getInstance(adminMenuButton);
+                     if(dropdownInstance) dropdownInstance.hide();
+                } else {
+                    adminDropdown.style.display = 'none';
+                }
+            }
+        });
+        
+        // Ensure dropdown items navigate correctly
+        adminDropdown.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function() {
+                 if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                     const dropdownInstance = bootstrap.Dropdown.getInstance(adminMenuButton);
+                     if(dropdownInstance) dropdownInstance.hide();
+                } else {
+                    adminDropdown.style.display = 'none';
+                }
+                // Navigation will be handled by href
+            });
+        });
+    }
 
-     fetch(activeEmployeesUrl)
-         .then(response => {
-             if (!response.ok) {
-                 console.error(`Error fetching active employees: ${response.status} ${response.statusText}`);
-                 return null; 
-             }
-             return response.json();
-         })
-         .then(data => {
-             if (!sidebarEmployeeList || !sidebarOnlineCount) return;
+    // --- Help Button ---
+    function initializeHelpButton() {
+        if (!helpButton) return;
+        helpButton.addEventListener('click', function() {
+            // Replace with actual help functionality or link
+            alert('Help & Support (Feature coming soon!)');
+        });
+    }
 
-             if (data && Array.isArray(data)) {
-                 sidebarEmployeeList.innerHTML = ''; 
-                 if (data.length > 0) {
-                     sidebarOnlineCount.textContent = data.length;
-                     data.forEach(emp => {
-                         const listItem = document.createElement('li');
-                         let userEditUrl = userEditUrlBase.replace('EMP_ID_PLACEHOLDER', emp._id);
-                         
-                         listItem.innerHTML = `<span class="online-dot"></span> <a href="${userEditUrl}" style="color: #ecf0f1; text-decoration:none;" title="${emp.display_name || 'N/A'} (ID: ${emp.employee_id || 'N/A'})">${(emp.display_name || 'Unnamed').substring(0,18)}${(emp.display_name && emp.display_name.length > 18) ? '...' : ''}</a>`;
-                         sidebarEmployeeList.appendChild(listItem);
-                     });
-                 } else {
-                     sidebarOnlineCount.textContent = '0';
-                     sidebarEmployeeList.innerHTML = '<li class="text-muted small" style="padding-left:0;">No employees recently active.</li>';
-                 }
-             } else if (data === null) {
-                 // Error handled by previous .then
-             } else {
-                 // console.warn("Unexpected data format for active employees:", data);
-                 sidebarOnlineCount.textContent = '0';
-                 sidebarEmployeeList.innerHTML = '<li class="text-warning small" style="padding-left:0;">Data error.</li>';
-             }
-         })
-         .catch(error => {
-             // console.error('Network or other error fetching active employees:', error);
-              if (sidebarOnlineCount) sidebarOnlineCount.textContent = '?';
-              if (sidebarEmployeeList && sidebarEmployeeList.textContent.includes("Loading...")) {
-                  sidebarEmployeeList.innerHTML = '<li class="text-danger small" style="padding-left:0;">Network error.</li>';
-              }
-         });
- }
- 
- if (sidebarEmployeeList && sidebarOnlineCount && apiEndpointsDiv) {
-     fetchActiveEmployeesSidebar();
-     setInterval(fetchActiveEmployeesSidebar, 30000); // Poll every 30 seconds
- }
+    // --- Employees Online Polling ---
+    function fetchActiveEmployeesSidebar() {
+        if (!sidebarEmployeeListEl || !sidebarOnlineCountEl) return;
 
- // Dismiss alerts
- const alerts = document.querySelectorAll('.alert-dismissible');
- alerts.forEach(function(alert) {
-     const closeButton = alert.querySelector('.btn-close');
-     if (closeButton) {
-         closeButton.addEventListener('click', function() {
-             alert.style.display = 'none';
-         });
-     }
- });
+        const activeEmployeesUrl = getApiUrl('activeEmployeesUrl');
+        const userEditUrlBase = getApiUrl('userEditUrlBase');
+
+        if (!activeEmployeesUrl || !userEditUrlBase) {
+            if (sidebarEmployeeListEl.textContent.includes("Loading...")) { // Show error only once
+                sidebarEmployeeListEl.innerHTML = '<li class="text-muted small" style="padding-left:0;">API config missing.</li>';
+                sidebarOnlineCountEl.textContent = '-';
+            }
+            return;
+        }
+
+        fetch(activeEmployeesUrl)
+            .then(response => {
+                if (!response.ok) {
+                    // console.error(`Error fetching active employees: ${response.status} ${response.statusText}`);
+                    // Avoid logging every poll failure, just update UI subtly if needed
+                    if (sidebarOnlineCountEl.textContent !== '?') sidebarOnlineCountEl.textContent = '?';
+                    return null;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!sidebarEmployeeListEl || !sidebarOnlineCountEl) return; // Re-check elements
+
+                if (data && Array.isArray(data)) {
+                    sidebarEmployeeListEl.innerHTML = ''; // Clear previous list
+                    if (data.length > 0) {
+                        sidebarOnlineCountEl.textContent = data.length;
+                        data.forEach(emp => {
+                            const listItem = document.createElement('li');
+                            const userEditUrl = userEditUrlBase.replace('EMP_ID_PLACEHOLDER', emp._id || '');
+                            
+                            const displayName = emp.display_name || emp.employee_id || 'Unnamed';
+                            const truncatedName = displayName.length > 18 ? displayName.substring(0, 16) + '...' : displayName;
+
+                            listItem.innerHTML = `
+                                <span class="online-dot"></span>
+                                <a href="${userEditUrl}" 
+                                   title="${displayName} (ID: ${emp.employee_id || 'N/A'})"
+                                   style="color: #ecf0f1; text-decoration:none;">
+                                   ${truncatedName}
+                                </a>`;
+                            sidebarEmployeeListEl.appendChild(listItem);
+                        });
+                    } else {
+                        sidebarOnlineCountEl.textContent = '0';
+                        sidebarEmployeeListEl.innerHTML = '<li class="text-muted small" style="padding-left:0;">No employees recently active.</li>';
+                    }
+                } else if (data !== null) { // If data is not null but also not an array
+                    // console.warn("Unexpected data format for active employees:", data);
+                    sidebarOnlineCountEl.textContent = '0';
+                    sidebarEmployeeListEl.innerHTML = '<li class="text-warning small" style="padding-left:0;">Data error.</li>';
+                }
+                // If data is null, it means an error was handled by the previous .then
+            })
+            .catch(error => {
+                // console.error('Network or other error fetching active employees:', error);
+                if (sidebarOnlineCountEl && sidebarOnlineCountEl.textContent !== '?') sidebarOnlineCountEl.textContent = '?';
+                // Avoid constant error messages in the UI for polling failures
+                if (sidebarEmployeeListEl && sidebarEmployeeListEl.textContent.includes("Loading...")) {
+                     sidebarEmployeeListEl.innerHTML = '<li class="text-danger small" style="padding-left:0;">Network error.</li>';
+                }
+            });
+    }
+
+    // --- Alert Dismissal (Using Bootstrap's JS for this is better if available) ---
+    function initializeAlertDismissal() {
+        const alertElements = document.querySelectorAll('.alert-dismissible');
+        alertElements.forEach(function(alert) {
+            const closeButton = alert.querySelector('.btn-close');
+            if (closeButton) {
+                closeButton.addEventListener('click', function() {
+                    // If Bootstrap JS is loaded, it handles this. This is a fallback.
+                    if (!(typeof bootstrap !== 'undefined' && bootstrap.Alert)) {
+                        alert.style.display = 'none';
+                    }
+                });
+            }
+        });
+    }
+
+    // --- Initialize Components ---
+    setActiveSidebarLink();
+    initializeAdminDropdown();
+    initializeHelpButton();
+    initializeAlertDismissal();
+
+    if (sidebarEmployeeListEl && sidebarOnlineCountEl) {
+        fetchActiveEmployeesSidebar(); // Initial call
+        setInterval(fetchActiveEmployeesSidebar, ACTIVE_EMPLOYEE_POLL_INTERVAL);
+    }
 
 });
