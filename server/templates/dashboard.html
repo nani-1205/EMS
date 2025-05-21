@@ -2,12 +2,11 @@
 {% block title %}Dashboard - TekPossible Monitor{% endblock %}
 
 {% block head_extra %}
-    {{ super() }}
-    {# Chart.js and Litepicker are assumed to be in layout.html or loaded globally #}
+    {# Page-specific CSS could go here if needed #}
 {% endblock %}
 
 {% block content %}
-<div id="dashboard-page" class="page">
+<div id="dashboard-page" class="page"> {# No 'active' class needed; Flask renders this page directly #}
     <div class="page-header">
         <h1 class="page-title">Dashboard</h1>
     </div>
@@ -41,24 +40,12 @@
     <div class="dashboard-row">
         <div class="dashboard-col-left card chart-container">
             <h3 class="card-title">Top 5 websites & applications <i class="fas fa-info-circle info-icon" title="Total active time during selected period for {{ selected_employee_id or 'all employees' }}"></i></h3>
-            <div style="display: flex; align-items: center; min-height: 180px;">
-                 <canvas id="topSitesChart" style="max-width: 160px; max-height: 160px; margin: 0 auto 15px auto; display: block;"></canvas>
+            <div style="display: flex; align-items: center; min-height: 180px; padding-top:10px;">
+                 <canvas id="topSitesChart" style="max-width: 160px; max-height: 160px; margin: 0 auto; display: block;"></canvas>
                 <div class="chart-legend" style="flex-grow: 1; margin-left: 20px;">
                     <ul id="topSitesLegend">
-                        {# This part is now correctly handled by JavaScript in scripts_extra if populated by JS,
-                           or can be pre-rendered if top_websites is small enough and colors are managed.
-                           For simplicity if JS populates, this Jinja loop is a fallback or initial state.
-                        #}
-                        {% if top_websites and top_websites|length > 0 %}
-                            {% for site in top_websites %}
-                            <li>
-                                <span><span class="legend-color" style="background-color: #ccc;"></span>{{ site.name | truncate(25) }}</span> 
-                                <span>{{ "{:0>2}:{:0>2}".format(site.duration // 60 % 60, site.duration % 60) if site.duration < 3600 else "{:0>2}:{:0>2}:{:0>2}".format(site.duration // 3600, site.duration // 60 % 60, site.duration % 60) }}</span>
-                            </li>
-                            {% endfor %}
-                        {% else %}
-                            <li class="text-muted small">No website/app data for this selection.</li>
-                        {% endif %}
+                        {# This will be populated by JavaScript #}
+                        <li class="text-muted small">Loading chart data...</li>
                     </ul>
                 </div>
             </div>
@@ -69,7 +56,6 @@
             <table>
                 <thead><tr><th>Name</th><th>Man Days</th><th>Work Hours (Total)</th></tr></thead>
                 <tbody>
-                    {# CORRECTED JINJA SYNTAX HERE #}
                     {% if work_hours_data and work_hours_data|length > 0 %}
                         {% for item in work_hours_data %}
                         <tr><td>{{ item.name | truncate(25) }}</td><td>{{ item.man_days | default('0', true) }}</td><td>{{ item.work_hours | default('--:--:--', true) }}</td></tr>
@@ -77,7 +63,6 @@
                     {% else %}
                         <tr><td colspan="3" class="text-center text-muted" style="padding:20px;">No work hour data found for this period.</td></tr>
                     {% endif %}
-                    {# PREVIOUSLY HAD AN EXTRA MISPLACED ENDFOR HERE #}
                 </tbody>
             </table>
             </div>
@@ -137,13 +122,21 @@ document.addEventListener('DOMContentLoaded', function() {
     let topSitesData = [];
 
     try {
-        const jsonData = {{ top_websites | tojson | safe }}; 
-        if (jsonData && Array.isArray(jsonData)) { topSitesData = jsonData; }
-    } catch (e) { console.error("Error processing top_websites JSON:", e); }
+        // Data is passed directly from Flask into the JS variable
+        topSitesData = {{ top_websites | tojson | safe }}; 
+        if (!Array.isArray(topSitesData)) { // Ensure it's an array
+             topSitesData = [];
+             console.warn("top_websites data was not an array.");
+        }
+    } catch (e) { 
+        console.error("Error processing top_websites JSON passed from Flask:", e);
+        topSitesData = []; // Ensure it's an array on error
+    }
 
-    const chartLabels = topSitesData.map(item => item.name && item.name.length > 20 ? item.name.substring(0, 18) + '...' : (item.name || 'Unknown'));
+    const chartLabels = topSitesData.map(item => item.name && item.name.length > 20 ? item.name.substring(0, 18) + '...' : (item.name || 'Unknown Site/App'));
     const chartDataValues = topSitesData.map(item => item.duration || 0);
-    const chartBackgroundColors = ['#4CAF50', '#2196F3', '#FFC107', '#E91E63', '#9c27b0', '#00bcd4', '#ff9800']; 
+    // Define more colors if you expect more than 5 items
+    const chartBackgroundColors = ['#4CAF50', '#2196F3', '#FFC107', '#E91E63', '#9c27b0', '#00BCD4', '#FF9800', '#795548', '#607D8B', '#F44336']; 
 
     if (ctx && topSitesData && topSitesData.length > 0) {
       if (window.topSitesChartInstance) { window.topSitesChartInstance.destroy(); }
@@ -156,29 +149,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 data: chartDataValues, 
                 backgroundColor: chartBackgroundColors.slice(0, chartDataValues.length), 
                 hoverOffset: 4,
-                borderWidth: 1 
+                borderWidth: 1 // Adds a small border between segments
             }] 
         },
         options: { 
             responsive: true, 
             maintainAspectRatio: false, 
-            cutout: '65%',
+            cutout: '65%', // Makes it a "doughnut"
             plugins: { 
-                legend: { display: false }, 
+                legend: { 
+                    display: false // We are using a custom legend
+                }, 
                 tooltip: { 
                     callbacks: { 
-                        label: function(c){
-                            let l=c.label||'';
-                            let v=c.raw||0;
-                            let s=parseInt(v);
-                            let h=Math.floor(s/3600);
-                            let m=Math.floor((s%3600)/60);
-                            let sec=s%60;
-                            let t='';
-                            if(h>0)t+=`${h}h `;
-                            if(m>0||h>0)t+=`${m}m `;
-                            t+=`${sec}s`;
-                            return`${l}: ${t.trim()}`;
+                        label: function(context){ // Corrected 'c' to 'context'
+                            let label = context.label || '';
+                            let value = context.raw || 0;
+                            let totalSeconds = parseInt(value);
+                            let hours = Math.floor(totalSeconds / 3600);
+                            let minutes = Math.floor((totalSeconds % 3600) / 60);
+                            let seconds = totalSeconds % 60;
+                            let formattedTime = '';
+                            if (hours > 0) formattedTime += `${hours}h `;
+                            if (minutes > 0 || hours > 0) formattedTime += `${minutes}m `; // Show minutes if hours are present
+                            formattedTime += `${seconds}s`;
+                            return `${label}: ${formattedTime.trim()}`;
                         }
                     }
                 }
@@ -186,8 +181,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
       
+      // Populate custom legend
       if(topSitesLegendElement) {
-          topSitesLegendElement.innerHTML = ''; 
+          topSitesLegendElement.innerHTML = ''; // Clear previous (like "Loading chart data...")
           if (topSitesData.length > 0) {
             topSitesData.forEach((site, index) => {
                 const color = chartBackgroundColors[index % chartBackgroundColors.length];
@@ -199,18 +195,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (hours > 0) formattedTime += `${String(hours).padStart(2, '0')}:`;
                 formattedTime += `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                 
+                const siteName = site.name ? String(site.name) : 'Unknown Site/App';
                 topSitesLegendElement.innerHTML += `
                     <li>
-                        <span><span class="legend-color" style="background-color: ${color};"></span>${site.name ? String(site.name).substring(0,25) : 'Unknown'}</span> 
+                        <span><span class="legend-color" style="background-color: ${color};"></span>${siteName.substring(0,25)}${siteName.length > 25 ? '...' : ''}</span> 
                         <span>${formattedTime}</span>
                     </li>`;
             });
-          } else {
+          } else { // Should not be reached if chart is drawn, but good fallback
              topSitesLegendElement.innerHTML = '<li class="text-muted small">No website/app data for this selection.</li>';
           }
       }
 
-    } else if (ctx) { 
+    } else if (ctx) { // No data to display, or canvas not found (though ctx check handles that)
         const context = ctx.getContext('2d');
         context.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         context.textAlign = 'center'; context.textBaseline = 'middle'; context.fillStyle = '#6c757d'; context.font = "14px sans-serif";
