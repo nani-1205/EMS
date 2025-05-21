@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
     <!-- Favicon -->
-    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon"> {# Create favicon.ico in static/img #}
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
 
     {% block head_extra %}{% endblock %}
 </head>
@@ -35,14 +35,16 @@
             {% if session.user_id %} {# Only show header if user is logged in #}
             <header class="header">
                 <div class="logo"><i class="fas fa-binoculars"></i>TekPossible Monitor</div>
-                <div class="admin-menu">
-                    <button class="admin-menu-button" id="adminMenuButton" aria-expanded="false" aria-controls="adminDropdown">
-                        <i class="fas fa-user-circle"></i> {{ session.username | default('Admin') }} <i class="fas fa-caret-down"></i>
-                    </button>
-                    <div class="admin-dropdown" id="adminDropdown">
-                        <a href="{{ url_for('settings.index') }}" class="nav-link-dropdown"><i class="fas fa-cog"></i> Settings</a>
-                        <a href="{{ url_for('auth.logout') }}" id="logoutButton"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                    </div>
+                {# Bootstrap Dropdown for Admin Menu #}
+                <div class="nav-item dropdown admin-menu">
+                    <a class="nav-link dropdown-toggle admin-menu-button" href="#" id="adminMenuButton" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle"></i> {{ session.username | default('Admin') }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminMenuButton" id="adminDropdown">
+                        <li><a class="dropdown-item" href="{{ url_for('settings.index') }}"><i class="fas fa-cog fa-fw"></i> Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt fa-fw"></i> Logout</a></li>
+                    </ul>
                 </div>
             </header>
             {% endif %}
@@ -51,7 +53,6 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                        {# Using Bootstrap alert classes #}
                         <div class="alert alert-{{ category if category in ['success', 'info', 'warning', 'danger'] else 'info' }} alert-dismissible fade show" role="alert">
                             {{ message }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -73,16 +74,13 @@
     </div>
     {% endif %}
 
-    {# Hidden div to pass Flask URLs to static JS file if needed for AJAX calls #}
     <div id="apiEndpoints" 
          data-active-employees-url="{{ url_for('api.get_active_employees', _external=False) if session.user_id else '' }}"
          data-user-edit-url-base="{{ url_for('users.edit_user', employee_doc_id='EMP_ID_PLACEHOLDER', _external=False) if session.user_id else '' }}">
     </div>
 
     <!-- Core Libraries - Load these first. -->
-    <!-- Chart.js (for graphs) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-    <!-- Litepicker JS (for date range pickers) -->
     <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js" defer></script>
     
     <!-- Bootstrap JS Bundle - Required for Bootstrap components like Modals, Collapse, Dropdowns -->
