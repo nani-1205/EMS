@@ -45,4 +45,4 @@ class Config:
             # Consider how to handle this if uploads are critical
 
     # Temp storage for agent executable (replace with actual path after building)
-    AGENT_EXE_PATH = os.path.join(basedir, '..', 'EXE', 'TekPossibleMonitorAgent_Setup_1.0.exe') # Adjust path as needed
+    AGENT_EXE_PATH = os.path.join(basedir, 'EXE', 'TekPossibleMonitorAgent_Setup_1.0.exe') # Adjust path as needed
