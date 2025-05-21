@@ -1,189 +1,306 @@
-/* Reset and Basic Styles */
+/* ==========================================================================
+   1. Base & Reset Styles
+   ========================================================================== */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
+
+html {
+    font-size: 16px; /* Base font size for rem units */
+}
+
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #f8f9fa; /* Lighter overall background */
-    color: #495057; /* Softer primary text color */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    background-color: #f8f9fa; /* Light gray overall background */
+    color: #212529; /* Default text color (Bootstrap's default body text) */
     display: flex;
     height: 100vh;
     overflow: hidden;
+    line-height: 1.6;
 }
 
-/* Layout */
-.app-container { display: flex; width: 100%; height: 100%; }
+a {
+    color: #007bff; /* Bootstrap primary blue for links */
+    text-decoration: none;
+    transition: color 0.15s ease-in-out;
+}
+a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   2. Layout Structure
+   ========================================================================== */
+.app-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
 
 .sidebar {
     width: 260px;
-    background-color: #2c3e50; /* Dark Slate Blue */
-    color: #e0e0e0; /* Lighter text on dark sidebar */
-    padding-top: 0; 
+    background-color: #2c3e50; /* Dark Slate Blue/Gray */
+    color: #e0e0e0; /* Light text for contrast */
+    padding-top: 0; /* Header can handle top spacing if inside sidebar */
     display: flex;
     flex-direction: column;
     height: 100%;
-    transition: width 0.3s ease;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
     flex-shrink: 0;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.12); /* Softer shadow */
+    z-index: 100; /* Ensure sidebar is above content if overlapping during transitions */
 }
-/* Sidebar Header/Logo Area (if you add one directly in sidebar) */
-.sidebar-header { 
-    padding: 18px 25px; text-align: center; border-bottom: 1px solid #3a5068;
-    font-size: 1.5em; font-weight: 600; color: #ffffff;
+
+.main-content-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #f8f9fa;
+    overflow: hidden; /* Prevent wrapper from causing scrollbars */
+}
+.main-content-wrapper.main-content-full-width {
+    width: 100%;
+}
+
+.header {
+    background-color: #ffffff;
+    color: #343a40; /* Darker text for header */
+    padding: 0 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 65px;
+    flex-shrink: 0;
+    border-bottom: 1px solid #dee2e6; /* Standard Bootstrap border */
+}
+
+.logo {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #343a40;
+}
+.logo i.fas { /* Target Font Awesome icon */
+    margin-right: 10px;
+    color: #007bff; /* Primary blue */
+}
+
+.content-area {
+    flex-grow: 1;
+    padding: 25px 30px; /* Slightly more horizontal padding */
+    overflow-y: auto; /* Enable scrolling for main content only */
+}
+
+/* ==========================================================================
+   3. Sidebar Navigation & Elements
+   ========================================================================== */
+.sidebar-header { /* Optional: If you have a logo/title inside sidebar itself */
+    padding: 18px 25px;
+    text-align: center;
+    border-bottom: 1px solid #3a5068; /* Darker separator */
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #ffffff;
 }
 .sidebar-header i { margin-right: 10px; color: #3498db; }
 
-
-.main-content-wrapper {
-    flex-grow: 1; display: flex; flex-direction: column;
-    height: 100%; background-color: #f8f9fa;
+.sidebar-nav {
+    margin-top: 10px; /* Space from top or sidebar-header */
+    flex-grow: 1; /* Allow nav to take available space */
 }
-.main-content-wrapper.main-content-full-width { width: 100%; }
-
-.header {
-    background-color: #ffffff; color: #333; padding: 0 25px;
-    display: flex; justify-content: space-between; align-items: center;
-    height: 65px; flex-shrink: 0; border-bottom: 1px solid #dee2e6;
+.sidebar-nav ul {
+    list-style-type: none;
+    padding-left: 0;
 }
-.logo { font-size: 1.5em; font-weight: 600; color: #343a40; }
-.logo i { margin-right: 10px; color: #007bff; }
-
-.admin-menu { position: relative; }
-.admin-menu-button {
-    background: none; border: none; color: #495057; font-size: 0.9em;
-    cursor: pointer; display: flex; align-items: center;
-    padding: 10px 15px; border-radius: 4px; transition: background-color 0.2s ease;
-}
-.admin-menu-button:hover { background-color: #e9ecef; }
-.admin-menu-button i.fa-user-circle { margin-right: 8px; font-size: 1.2em; }
-.admin-menu-button i.fa-caret-down { margin-left: 8px; }
-.admin-dropdown { /* This will now be styled by Bootstrap if Bootstrap CSS is active */
-    /* display: none; */ /* Bootstrap handles display */
-    /* position: absolute; right: 0; top: calc(100% + 5px); */
-    /* background-color: white; border: 1px solid #e0e0e0; */
-    /* box-shadow: 0 5px 15px rgba(0,0,0,0.15); */
-    z-index: 1050; /* Ensure above other elements */
-    min-width: 200px;
-    /* border-radius: 6px; overflow: hidden; */
-}
-/* Custom styling for dropdown items if Bootstrap's default isn't enough */
-.admin-dropdown a.nav-link-dropdown, .admin-dropdown a { 
-    /* display: flex; align-items: center; padding: 10px 20px; */
-    /* text-decoration: none; color: #333; font-size: 0.9em; white-space: nowrap; */
-}
-.admin-dropdown a.nav-link-dropdown i, .admin-dropdown a i {
-    /* margin-right: 10px; width: 18px; color: #007bff; text-align: center; */
-}
-/* .admin-dropdown a:hover { background-color: #f8f9fa; } */
-
-
-.content-area { flex-grow: 1; padding: 30px; overflow-y: auto; }
-
-/* Sidebar Navigation */
-.sidebar-nav { margin-top: 15px; }
-.sidebar-nav ul { list-style-type: none; padding-left: 0; }
 .sidebar-nav li a {
-    display: flex; align-items: center; padding: 15px 25px;
-    color: #adb5bd; text-decoration: none; font-size: 0.95em;
-    transition: all 0.25s ease; border-left: 4px solid transparent; margin: 2px 0;
+    display: flex;
+    align-items: center;
+    padding: 14px 25px; /* Consistent padding */
+    color: #adb5bd; /* Lighter gray for inactive links */
+    text-decoration: none;
+    font-size: 0.925em; /* Slightly larger */
+    font-weight: 400;
+    transition: all 0.2s ease-in-out;
+    border-left: 4px solid transparent; /* Active indicator */
+    margin: 2px 0; /* Small vertical margin */
 }
 .sidebar-nav li a i.fas {
-    margin-right: 15px; width: 22px; text-align: center; font-size: 1.05em;
-    color: #8699ad; transition: color 0.25s ease;
+    margin-right: 15px;
+    width: 20px; /* Fixed width for alignment */
+    text-align: center;
+    font-size: 1.1em; /* Slightly larger icons */
+    color: #8699ad; /* Default icon color */
+    transition: color 0.2s ease-in-out;
 }
-.sidebar-nav li a:hover { background-color: rgba(255,255,255,0.05); color: #ffffff; border-left-color: #5dade2; }
-.sidebar-nav li a:hover i.fas { color: #5dade2; }
-.sidebar-nav li a.active { background-color: #007bff; color: white; font-weight: 500; border-left-color: #ffffff; }
-.sidebar-nav li a.active i.fas { color: white; }
-.sidebar-nav li a span { flex-grow: 1; }
-
+.sidebar-nav li a:hover {
+    background-color: rgba(255, 255, 255, 0.07); /* Subtle hover */
+    color: #ffffff;
+    border-left-color: #5dade2; /* Light blue accent on hover */
+}
+.sidebar-nav li a:hover i.fas {
+    color: #5dade2;
+}
+.sidebar-nav li a.active {
+    background-color: #007bff; /* Primary blue for active */
+    color: #ffffff;
+    font-weight: 500; /* Bolder active text */
+    border-left-color: #ffffff; /* White indicator for active */
+}
+.sidebar-nav li a.active i.fas {
+    color: #ffffff; /* White icon for active item */
+}
+.sidebar-nav li a span {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 /* Collapsible Employees Online Section */
-.sidebar-section.collapsible-section { padding: 0; margin-top: 20px; border-top: 1px solid #4a627a; }
+.sidebar-section.collapsible-section {
+    padding: 0;
+    margin-top: 15px;
+    border-top: 1px solid #3a5068; /* Slightly darker separator */
+}
 .sidebar-section-toggle {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 25px; text-decoration: none; color: #adb5bd;
+    padding: 12px 25px; text-decoration: none; color: #adb5bd;
     font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.8px;
-    font-weight: 600; cursor: pointer; transition: background-color 0.2s ease; width: 100%;
+    font-weight: 600; cursor: pointer; transition: background-color 0.2s ease;
+    width: 100%;
 }
 .sidebar-section-toggle:hover { background-color: rgba(255,255,255,0.05); color: #ffffff; }
 .sidebar-section-toggle .online-count {
-    background-color: #28a745; min-width: 20px; height: 20px;
-    font-size: 0.75em; margin-left: 5px; padding: 0 5px;
+    background-color: #28a745; /* Bootstrap success green */
+    color: white; border-radius: 10px; min-width: 20px; height: 20px;
+    padding: 0 6px; display: inline-flex; justify-content: center; align-items: center;
+    font-size: 0.9em; /* Make count slightly larger */ font-weight: bold;
+    margin-left: 8px; margin-right: 8px;
 }
-.sidebar-section-toggle .collapse-icon { transition: transform 0.3s ease; font-size: 0.8em; }
+.sidebar-section-toggle .collapse-icon { transition: transform 0.25s ease; font-size: 0.8em; }
 .sidebar-section-toggle[aria-expanded="true"] .collapse-icon { transform: rotate(180deg); }
-.sidebar-section-toggle span:first-child { color: #ced4da; }
+.sidebar-section-toggle span:first-child { color: #ced4da; } /* Main text of toggle */
 
-#employeesOnlineCollapse.collapse.show { background-color: rgba(0,0,0,0.15); border-bottom: 1px solid #4a627a; }
-#employeesOnlineCollapse ul {
-    list-style-type: none; max-height: 180px; overflow-y: auto;
-    padding: 10px 10px 10px 25px; 
+#employeesOnlineCollapse.collapse.show {
+    background-color: rgba(0,0,0,0.1); /* Subtle background for expanded list */
+    border-bottom: 1px solid #3a5068;
 }
-#employeesOnlineCollapse li { padding: 7px 0; font-size: 0.875em; display: flex; align-items: center; color: #adb5bd; }
+#employeesOnlineCollapse ul {
+    list-style-type: none; max-height: 160px; overflow-y: auto;
+    padding: 8px 10px 8px 25px; /* Top/bottom padding + indent */
+}
+#employeesOnlineCollapse li { padding: 6px 0; font-size: 0.85em; display: flex; align-items: center; color: #adb5bd; }
 #employeesOnlineCollapse li a { color: #adb5bd; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; }
 #employeesOnlineCollapse li a:hover { color: #ffffff; }
-.online-dot { width: 9px; height: 9px; background-color: #28a745; border-radius: 50%; margin-right: 10px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.3); }
+.online-dot { width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; margin-right: 10px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2); }
 
-.sidebar-notification { padding-top: 10px; margin-top: 10px; border-top: 1px solid #4a627a; }
-.sidebar-notification a { display: flex; align-items: center; justify-content: center; padding: 10px 15px; text-decoration: none; font-size: 0.85em; border-radius: 4px; transition: all 0.2s ease; }
-.sidebar-notification.pending-notification a { color: #ffc107; }
-.sidebar-notification a:hover { color: #ffffff; background-color: rgba(255,255,255,0.1); }
-.sidebar-notification i { margin-right: 8px; }
-
-.sidebar-footer { padding: 20px; border-top: 1px solid #4a627a; text-align: center; margin-top:auto; background-color: #2c3e50; }
-
-
-/* Page Structure & General Elements */
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #e9ecef; }
-.page-title { font-size: 2em; color: #343a40; font-weight: 600; }
-
-/* Using Bootstrap button styles now, so .btn specific styles are for minor tweaks or overrides */
-/* .btn i.fas, .btn i.far, .btn i.fab { margin-right: 0.5em; } */ /* Bootstrap handles this better */
-
-/* Forms - styled by Bootstrap, these are for minor adjustments if needed */
-.form-group { margin-bottom: 1.25rem; }
-.form-label { font-weight: 500; color: #495057; margin-bottom: .5rem; }
-.filter-form .form-label { font-size: 0.9em; }
-.filter-form .form-control, .filter-form .form-select { font-size: 0.9em; }
-
-
-/* Tables - styled by Bootstrap .table, .table-striped, .table-hover */
-/* .table-container is for custom wrapper if needed */
-.status-badge { /* Bootstrap badges can be used: badge bg-success, badge bg-warning text-dark etc. */
-    padding: .3em .65em; font-size: 75%; font-weight: 700; line-height: 1;
-    color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .375rem;
+.sidebar-notification { padding: 10px 0; margin-top: 10px; border-top: 1px solid #3a5068; }
+.sidebar-notification a {
+    display: flex; align-items: center; justify-content: flex-start; /* Align left */
+    padding: 10px 25px; text-decoration: none; font-size: 0.85em;
+    transition: all 0.2s ease;
 }
-.status-active { background-color: #198754; } /* Bootstrap success */
-.status-inactive, .status-disabled { background-color: #6c757d; } /* Bootstrap secondary */
-.status-pending, .status-pending_rename { background-color: #ffc107; color: #000; } /* Bootstrap warning */
+.sidebar-notification.pending-notification a { color: #ffc107; /* Bootstrap warning yellow */ }
+.sidebar-notification a:hover { color: #ffffff; background-color: rgba(255,255,255,0.07); }
+.sidebar-notification i.fas { margin-right: 12px; width:20px; text-align: center;}
 
-/* Cards - Using Bootstrap .card styling */
-.card { margin-bottom: 1.5rem; }
-.card-header { font-weight: 600; }
+.sidebar-footer {
+    padding: 15px 20px; border-top: 1px solid #3a5068;
+    text-align: center; margin-top:auto; background-color: #233140; /* Slightly darker footer */
+    font-size: 0.8em; color: #6c757d;
+}
 
-/* Dashboard Specific */
+/* ==========================================================================
+   4. Header Admin Dropdown (Leveraging Bootstrap classes primarily)
+   ========================================================================== */
+.header .admin-menu .dropdown-toggle {
+    color: #495057;
+    font-weight: 500;
+    background-color: transparent;
+    border: none;
+}
+.header .admin-menu .dropdown-toggle:hover,
+.header .admin-menu .dropdown-toggle:focus {
+    background-color: #e9ecef;
+    color: #212529;
+}
+.header .admin-menu .dropdown-menu { /* Bootstrap class target */
+    border-radius: .375rem; /* Softer radius */
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15); /* Standard Bootstrap shadow */
+    border: 1px solid rgba(0,0,0,.1);
+    margin-top: .25rem !important; /* Align with button bottom */
+}
+.admin-dropdown .dropdown-item { /* Bootstrap class target */
+    display: flex; align-items: center;
+    padding: .5rem 1.25rem; /* Bootstrap-like padding */
+    font-size: 0.9em;
+}
+.admin-dropdown .dropdown-item i.fas {
+    margin-right: .75rem; width: 16px; color: #495057;
+}
+.admin-dropdown .dropdown-item:active { /* Pressed state */
+    background-color: #007bff;
+    color: #fff;
+}
+.admin-dropdown .dropdown-item:active i.fas {
+    color: #fff;
+}
+
+/* ==========================================================================
+   5. Page Structure & General Elements (Titles, Forms, Tables, Cards)
+   ========================================================================== */
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #e9ecef; }
+.page-title { font-size: 1.8em; color: #343a40; font-weight: 600; }
+
+/* Using Bootstrap for Buttons (.btn, .btn-primary etc.) - these are overrides or custom additions */
+.btn-edit { background-color: #ffc107; border-color: #ffc107; color: #212529; } /* Warning yellow for edit */
+.btn-edit:hover { background-color: #e0a800; border-color: #d39e00; }
+
+/* Forms - Rely on Bootstrap, these are for specific tweaks */
+.form-group { margin-bottom: 1.25rem; }
+.form-label { font-weight: 500; color: #495057; margin-bottom: .5rem; font-size: 0.9rem; }
+.filter-form .form-label { font-size: 0.85rem; }
+.filter-form .form-control, .filter-form .form-select { font-size: 0.85rem; }
+.form-actions { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e9ecef; }
+
+/* Tables - Rely on Bootstrap (.table, .table-striped, .table-hover) */
+.table-container { box-shadow: 0 1px 3px rgba(0,0,0,.1); } /* Softer shadow for table container */
+th { white-space: nowrap; }
+td { vertical-align: middle; }
+
+/* Cards - Rely on Bootstrap (.card, .card-header, .card-body, .card-footer) */
+.card { border: 1px solid #dee2e6; }
+.card-header { background-color: #f8f9fa; font-size: 1rem; font-weight: 600; }
+
+/* ==========================================================================
+   6. Dashboard Specific Styles
+   ========================================================================== */
 .dashboard-filters { margin-bottom: 25px; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-.dashboard-filters .btn-group .btn.active { background-color: #0d6efd; color:white; border-color: #0d6efd; }
+.dashboard-filters .btn-group .btn.active { background-color: #0d6efd; color:white; } /* Bootstrap primary active */
 .dashboard-filters .form-select { min-width: 200px; max-width: 280px; }
 .dashboard-filters .date-info { font-size: 0.9em; color: #6c757d; margin-left: auto; white-space: nowrap;}
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1.25rem; margin-bottom: 25px; }
-.stat-card .card-title { font-size: 0.9em; color: #6c757d; margin-bottom: 0.5rem; font-weight: 500; } /* Using .card-title for stat card headers */
-.stat-card .card-text { font-size: 1.8em; font-weight: 600; color: #212529; line-height: 1.2; }
+.stat-card .card-body { padding: 1.25rem; } /* Ensure padding if using .card directly */
+.stat-card .card-title { font-size: 0.9em; color: #6c757d; margin-bottom: 0.5rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;}
+.stat-card .card-text { font-size: 2em; font-weight: 700; color: #343a40; line-height: 1.1; }
 .dashboard-row { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
 .dashboard-col-left, .dashboard-col-right { flex: 1; min-width: 320px; }
-.chart-container .info-icon { color: #6c757d; cursor: help; }
+.chart-container .card-header i.fas { color: #6c757d; cursor: help; font-size: 0.9em; }
 #topSitesChart { max-height: 180px; margin: auto; }
-.chart-legend ul { list-style: none; padding-left: 0; }
-.chart-legend li { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; font-size: 0.875em; border-bottom: 1px solid #f1f1f1; }
+.chart-legend ul { list-style: none; padding-left: 0; margin-top: 1rem; }
+.chart-legend li { display: flex; justify-content: space-between; align-items: center; padding: .35rem 0; font-size: 0.875em; border-bottom: 1px solid #f1f1f1; }
 .chart-legend li:last-child { border-bottom: none; }
-.chart-legend .legend-color { width: 12px; height: 12px; border-radius: .2rem; margin-right: 0.6rem; display: inline-block; flex-shrink: 0; }
-.chart-legend span:first-child { display: flex; align-items: center; margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 70px); }
+.chart-legend .legend-color { width: 12px; height: 12px; border-radius: .2rem; margin-right: .75rem; display: inline-block; flex-shrink: 0; }
+.chart-legend span:first-child { display: flex; align-items: center; margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 80px); /* Adjust if times are wider */ }
 .chart-legend span:last-child { font-weight: 500; color: #495057; flex-shrink: 0; }
 .work-hours-table .card-header i.fas { color: #6c757d; cursor: pointer; font-size: 1em; }
 
+/* ==========================================================================
+   7. Other Page Specifics (Reports, Settings, Users)
+   ========================================================================== */
 /* Reports Center Cards */
 .report-cards-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
 .report-card i.fas { font-size: 2.5em; color: #0d6efd; margin-bottom: 1rem; }
@@ -193,57 +310,57 @@ body {
 
 /* Screenshot Report Grid */
 .screenshot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 1rem; margin-top: 1.25rem; }
-.screenshot-item .card-img-top { width: 100%; height: 120px; object-fit: cover; cursor: pointer; background-color: #e9ecef; }
-.screenshot-item .card-footer { padding: .5rem .75rem; font-size: 0.75em; }
+.screenshot-item .card-img-top { width: 100%; height: 120px; object-fit: cover; cursor: pointer; background-color: #e9ecef; border-bottom: 1px solid #dee2e6; }
+.screenshot-item .card-footer { padding: .5rem .75rem; font-size: 0.75em; background-color: #f8f9fa;}
+
+/* Max width for forms on larger screens */
+.form-container { max-width: 700px; margin-left: auto; margin-right: auto; }
+.settings-form-container { max-width: 550px; margin-left: auto; margin-right: auto; }
 
 /* Help Button */
 .help-button { position: fixed; bottom: 25px; right: 25px; background-color: #dc3545; color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.6em; box-shadow: 0 3px 8px rgba(0,0,0,0.25); cursor: pointer; z-index: 1030; transition: background-color 0.2s ease; }
 .help-button:hover { background-color: #c82333; }
-        
-.form-container { max-width: 700px; margin-left: auto; margin-right: auto; }
-.settings-form-container { max-width: 550px; margin-left: auto; margin-right: auto; }
 
-/* Bootstrap Alert Overrides/Defaults if Bootstrap CSS not fully loaded */
-.alert { position: relative; padding: 1rem 1rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: .25rem; }
-.alert-success { color: #0f5132; background-color: #d1e7dd; border-color: #badbcc;}
-.alert-info    { color: #055160; background-color: #cff4fc; border-color: #b6effb;}
-.alert-warning { color: #664d03; background-color: #fff3cd; border-color: #ffecb5;}
-.alert-danger  { color: #842029; background-color: #f8d7da; border-color: #f5c2c7;}
-.alert-dismissible .btn-close { /* Using Bootstrap's .btn-close for styling */
-    padding: 0.75rem 1rem; /* Adjust padding if needed */
-}
+/* Bootstrap Alert styling (relies on Bootstrap CSS being loaded for full effect) */
+/* The .alert-dismissible and .btn-close styling will come from Bootstrap */
 
-
-/* Responsive adjustments */
-@media (max-width: 992px) { 
+/* ==========================================================================
+   8. Responsive Adjustments
+   ========================================================================== */
+@media (max-width: 992px) { /* Tablet and smaller */
     .sidebar { width: 70px; }
+    .sidebar .sidebar-header { padding: 18px 10px; font-size: 1.2em; }
+    .sidebar .sidebar-header i { margin-right: 0; } /* Hide text by hiding span */
     .sidebar .sidebar-nav li a span, 
     .sidebar .sidebar-section-toggle span:first-child,
-    /* .sidebar #employeesOnlineCollapse ul, */ /* Let Bootstrap handle collapse display */
-    .sidebar .sidebar-notification a span {
-        display: none;
-    }
+    .sidebar .sidebar-notification a span { display: none; }
     .sidebar .sidebar-nav li a { justify-content: center; padding: 15px 10px; }
     .sidebar .sidebar-nav li a i.fas { margin-right: 0; font-size: 1.3em; }
     .sidebar .sidebar-section-toggle { justify-content: center; }
     .sidebar .sidebar-section-toggle .online-count { margin-left: 0; }
     .sidebar .sidebar-section-toggle .collapse-icon { margin-left: 5px; }
+    #employeesOnlineCollapse ul { padding: 8px 10px; } /* Adjust padding for collapsed list */
+    #employeesOnlineCollapse li a { /* Don't show text in collapsed online list */ display:none; }
+    #employeesOnlineCollapse li .online-dot { margin-right: 0; }
+
+
     .sidebar .sidebar-notification a { justify-content: center; }
-    .sidebar .sidebar-notification i { margin-right: 0; font-size: 1.1em; }
+    .sidebar .sidebar-notification i.fas { margin-right: 0; font-size: 1.1em; }
+
     .dashboard-row { flex-direction: column; }
     .dashboard-col-left, .dashboard-col-right { flex: none; width: 100%; min-width: auto; }
     .report-cards-container { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px) { /* Mobile */
     .dashboard-filters { flex-direction: column; align-items: stretch; }
     .dashboard-filters .btn-group, .dashboard-filters .form-select { width: 100%; margin-bottom: 10px; }
     .dashboard-filters .date-info { width: 100%; text-align: center; margin-left: 0; margin-top: 5px; }
     .header { padding: 0 15px; height: 60px;}
     .logo { font-size: 1.2em; }
     .admin-menu-button { font-size: 0.9em; }
-    .content-area { padding: 20px 15px; } /* Reduced horizontal padding */
-    .page-title { font-size: 1.6em; }
+    .content-area { padding: 20px 15px; }
+    .page-title { font-size: 1.5em; }
     .screenshot-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; }
     .stats-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; }
     .stat-card .card-text { font-size: 1.4em; }
@@ -251,7 +368,7 @@ body {
     .btn-sm { padding: 5px 10px; font-size: 0.8em; }
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling (optional, WebKit browsers) */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: #f0f3f5; border-radius: 10px; }
 ::-webkit-scrollbar-thumb { background: #ced4da; border-radius: 10px; }
