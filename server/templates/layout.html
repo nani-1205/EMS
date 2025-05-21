@@ -11,7 +11,7 @@
     <!-- Litepicker CSS (for date range pickers) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/>
     
-    {# Bootstrap CSS - Required for Bootstrap JS components like Modals, Collapse, Dropdowns #}
+    <!-- Bootstrap CSS - Required for Bootstrap JS components like Modals, Collapse, Dropdowns -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
     <!-- Your Custom Stylesheet -->
@@ -26,7 +26,7 @@
     <div class="app-container">
         {% if session.user_id %} {# Only show sidebar if user is logged in #}
         <aside class="sidebar">
-            {# Pass all context variables to the included template #}
+            {# Pass all context variables to the included template for things like pending_rename_count #}
             {% include 'partials/_sidebar_task.html' with context %}
         </aside>
         {% endif %}
@@ -36,7 +36,7 @@
             <header class="header">
                 <div class="logo"><i class="fas fa-binoculars"></i>TekPossible Monitor</div>
                 <div class="admin-menu">
-                    <button class="admin-menu-button" id="adminMenuButton">
+                    <button class="admin-menu-button" id="adminMenuButton" aria-expanded="false" aria-controls="adminDropdown">
                         <i class="fas fa-user-circle"></i> {{ session.username | default('Admin') }} <i class="fas fa-caret-down"></i>
                     </button>
                     <div class="admin-dropdown" id="adminDropdown">
@@ -51,10 +51,9 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                        {# Using Bootstrap alert classes if Bootstrap CSS is included, otherwise custom .alert styling will apply #}
                         <div class="alert alert-{{ category if category in ['success', 'info', 'warning', 'danger'] else 'info' }} alert-dismissible fade show" role="alert">
                             {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button> {# Bootstrap close button #}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                         {% endfor %}
                     {% endif %}
@@ -68,11 +67,12 @@
     </div>
 
     {% if session.user_id %} {# Only show help button if user is logged in #}
-    <div class="help-button" id="helpButton">
-        <i class="fas fa-question"></i>
+    <div class="help-button" id="helpButton" title="Get Help"> {# Added title attribute #}
+        <i class="fas fa-question-circle"></i> {# Font Awesome question circle icon #}
     </div>
     {% endif %}
 
+    {# Hidden div to pass Flask URLs to static JS file if needed for AJAX calls #}
     <div id="apiEndpoints" 
          data-active-employees-url="{{ url_for('api.get_active_employees', _external=False) if session.user_id else '' }}"
          data-user-edit-url-base="{{ url_for('users.edit_user', employee_doc_id='EMP_ID_PLACEHOLDER', _external=False) if session.user_id else '' }}">
@@ -82,7 +82,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js" defer></script>
     
-    {# Bootstrap JS Bundle - Required for Bootstrap components like Modals, Collapse, Dropdowns #}
+    <!-- Bootstrap JS Bundle - Required for Bootstrap components like Modals, Collapse, Dropdowns -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
     <!-- Your Custom Main JavaScript -->

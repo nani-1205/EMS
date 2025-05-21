@@ -38,14 +38,14 @@
 
 {# Collapsible Employees Online Section - Uses Bootstrap Collapse #}
 <div class="sidebar-section collapsible-section">
-    <a href="#employeesOnlineCollapse" class="sidebar-section-toggle collapsed" {# Add 'collapsed' class by default #}
+    <a href="#employeesOnlineCollapse" class="sidebar-section-toggle collapsed" {# Start collapsed #}
        data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="employeesOnlineCollapse">
         <span>EMPLOYEES ONLINE</span>
         <span class="online-count" id="sidebarOnlineCount">{{ employees_online_count | default('0') }}</span>
-        <i class="fas fa-chevron-down collapse-icon ms-auto"></i> {# ms-auto pushes chevron to right if text is short #}
+        <i class="fas fa-chevron-down collapse-icon ms-auto"></i>
     </a>
-    <div class="collapse" id="employeesOnlineCollapse"> {# Bootstrap 'collapse' class #}
-        <ul id="sidebarEmployeeList" class="list-unstyled ps-3">
+    <div class="collapse" id="employeesOnlineCollapse">
+        <ul id="sidebarEmployeeList" class="list-unstyled ps-3"> {# Use list-unstyled from Bootstrap if available #}
             {% if active_employees_for_sidebar and active_employees_for_sidebar|length > 0 %}
                 {% for emp in active_employees_for_sidebar %}
                     <li>
@@ -57,7 +57,7 @@
                     </li>
                 {% endfor %}
             {% else %}
-                <li class="text-muted small" style="padding-left:0;">Loading...</li>
+                <li class="text-muted small" style="padding-left:0;">Loading...</li> {# Initial message #}
             {% endif %}
         </ul>
     </div>
@@ -66,7 +66,7 @@
 
 {% if pending_rename_count and pending_rename_count > 0 %}
 <div class="sidebar-notification pending-notification">
-    <a href="{{ url_for('users.list_users', q='pending_rename') }}" {# Example: filter by status #}
+    <a href="{{ url_for('users.list_users', q='pending_rename') }}" {# Example link to filtered users #}
        title="{{ pending_rename_count }} user(s) need configuration">
         <i class="fas fa-exclamation-triangle"></i> 
         <span>{{ pending_rename_count }} User(s) Pending</span>
@@ -75,5 +75,6 @@
 {% endif %}
 
 <div class="sidebar-footer mt-auto"> 
-    {# Optional footer content #}
+    {# You can add app version or other info here if desired #}
+    {# <span class="text-muted small">v{{ config.APP_VERSION or '1.0.0' }}</span> #}
 </div>
