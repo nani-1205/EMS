@@ -1,0 +1,104 @@
+{% extends "layout.html" %}
+{% block title %}Manage Productivity Categories - TekPossible Monitor{% endblock %}
+
+{% block content %}
+<div id="manage-categories-page" class="page">
+    <div class="page-header">
+        <h1 class="page-title">Manage Productivity Categories</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-md-5 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Add New Category</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('categorization.add_category') }}">
+                        <div class="form-group">
+                            <label for="categoryName" class="form-label">Category Name*</label>
+                            <input type="text" id="categoryName" name="name" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="categoryDescription" class="form-label">Description (Optional)</label>
+                            <textarea id="categoryDescription" name="description" class="form-control form-control-sm" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="categoryColor" class="form-label">Color</label>
+                            <input type="color" id="categoryColor" name="color" class="form-control form-control-sm form-control-color" value="#cccccc" title="Choose category color">
+                        </div>
+                        <div class="form-actions mt-3 pt-0 border-0">
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save me-1"></i> Add Category</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list-ul me-2"></i>Existing Categories</h5>
+                </div>
+                <div class="card-body p-0"> {# Remove padding for table to fit nicely #}
+                    {% if categories and categories|length > 0 %}
+                    <div class="table-container" style="box-shadow: none; border: none;">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;">Color</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories %}
+                                <tr>
+                                    <td><span style="display:inline-block; width: 20px; height: 20px; background-color: {{ category.color | default('#ccc') }}; border-radius: 3px; border: 1px solid #ddd;"></span></td>
+                                    <td>{{ category.name }} {% if category.is_default %}<span class="badge bg-secondary" style="font-size:0.7em;">Default</span>{% endif %}</td>
+                                    <td>{{ category.description | truncate(50, True) }}</td>
+                                    <td class="text-center" style="white-space: nowrap;">
+                                        <a href="{{ url_for('categorization.edit_category', category_id_str=category._id) }}" class="btn btn-sm btn-outline-secondary me-1" title="Edit Category">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {# Link to manage rules for this category (TODO) #}
+                                        <a href="#" class="btn btn-sm btn-outline-info me-1" title="Manage Rules (Not Implemented Yet)">
+                                            <i class="fas fa-tasks"></i> Rules
+                                        </a>
+                                        {% if not category.is_default %}
+                                        <form method="POST" action="{{ url_for('categorization.delete_category', category_id_str=category._id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete the category \'{{ category.name }}\'? This cannot be undone.');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Category">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                         <button type="button" class="btn btn-sm btn-outline-danger" title="Default categories cannot be deleted" disabled>
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center p-4">No categories defined yet. Default categories will be created on first run if missing.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header"><h5 class="mb-0"><i class="fas fa-ruler-combined me-2"></i>Categorization Rules</h5></div>
+        <div class="card-body">
+            <p class="text-muted">Management of specific rules (e.g., assigning 'outlook.exe' to 'Productive') will be implemented here. Rules will be listed under their respective categories above once added.</p>
+            {# TODO: Add table or list for rules, possibly filtered by selected category or a separate page #}
+            <a href="#" class="btn btn-primary btn-sm disabled"><i class="fas fa-plus-circle me-1"></i> Add New Rule (Select Category First)</a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
